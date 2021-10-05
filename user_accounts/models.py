@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
+from utils.normalizer import Normalizer
 
 
 class UserAccountManager(BaseUserManager):
@@ -7,12 +8,11 @@ class UserAccountManager(BaseUserManager):
         if not all([email, password, first_name, last_name, middle_name]):
             raise ValueError("Some of the required arguments are None, please, specify not None arguments.")
 
-        # TODO: add other fields normalization
         user = self.model(
             email=self.normalize_email(email),
-            first_name=first_name,
-            last_name=last_name,
-            middle_name=middle_name,
+            first_name=Normalizer.first_capital(first_name),
+            last_name=Normalizer.first_capital(last_name),
+            middle_name=Normalizer.first_capital(middle_name),
         )
         user.set_password(password)
         user.save(using=self._db)
