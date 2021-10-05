@@ -57,6 +57,20 @@ class UserAccount(AbstractBaseUser):
     def is_staff(self):
         return self.is_admin
 
+    @property
+    def profile(self):
+        model = None
+        try:
+            model = self.student_profile
+            return model
+        except StudentProfile.DoesNotExist:
+            try:
+                model = self.teacher_profile
+            except TeacherProfile.DoesNotExist:
+                raise AttributeError('There is not any profile object related to this user.')
+
+        return model
+
     def has_module_perms(self, app_label):
         return self.is_admin
 
