@@ -85,7 +85,7 @@ class Task(models.Model):
 
 
 class Attachment(models.Model):
-    # task = models.ForeignKey(Task,on_delete=models.CASCADE)
+    task = models.ForeignKey(Task,on_delete=models.CASCADE)
     file = models.FileField(upload_to='uploads/')
 
     def __str__(self):
@@ -94,7 +94,7 @@ class Attachment(models.Model):
 
 class StudentWork(models.Model):
     task = models.ForeignKey(Task,on_delete=models.CASCADE)
-    # course_member = models.ForeignKey(CourseMember,on_delete=models.CASCADE)
+    course_member = models.ForeignKey(CourseMember,on_delete=models.CASCADE)
     answer = models.TextField(null=True)
     STATUSES = (
         ('A', 'Assigned'),
