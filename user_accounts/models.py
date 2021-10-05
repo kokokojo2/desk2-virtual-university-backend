@@ -1,6 +1,10 @@
+from functools import partial
+
 from django.db import models
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
-from utils.normalizer import Normalizer
+
+from utils.normalizers import Normalizer
+from utils.validators import get_regex_validator, validate_number_len
 
 
 class UserAccountManager(BaseUserManager):
@@ -34,9 +38,9 @@ class UserAccount(AbstractBaseUser):
     use safe **profile** property instead.
     """
 
-    first_name = models.CharField(max_length=128)
-    last_name = models.CharField(max_length=128)
-    middle_name = models.CharField(max_length=128)
+    first_name = models.CharField(max_length=128, validators=[get_regex_validator('first name', whitespace=False)])
+    last_name = models.CharField(max_length=128, validators=[get_regex_validator('last name', whitespace=False)])
+    middle_name = models.CharField(max_length=128, validators=[get_regex_validator('middle name', whitespace=False)])
     email = models.EmailField(unique=True, max_length=256)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -77,13 +81,13 @@ class UserAccount(AbstractBaseUser):
 
 
 class TeacherProfile(models.Model):
-    scientific_degree = models.CharField(max_length=128)
-    position = models.CharField(max_length=128)
+    scientific_degree = models.CharField(max_length=128, validators=[get_regex_validator('scientific degree')])
+    position = models.CharField(max_length=128, validators=[get_regex_validator('scientific degree')])
     user = models.OneToOneField(UserAccount, related_name='teacher_profile', on_delete=models.CASCADE)
 
 
 class StudentProfile(models.Model):
-    student_card_id = models.BigIntegerField()
+    student_card_id = models.BigIntegerField(validators=[partial(validate_number_len, digits_number=8)])
     user = models.OneToOneField(UserAccount, related_name='student_profile', on_delete=models.CASCADE)
     # TODO: add foreign key to group
 
