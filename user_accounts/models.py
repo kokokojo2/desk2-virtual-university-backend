@@ -19,14 +19,10 @@ class UserAccountManager(BaseUserManager):
 
         return user
 
-    def create_superuser(self, email, password, first_name, last_name, middle_name):
-        if not all([email, password, first_name, last_name, middle_name]):
-            raise ValueError("Some of the required arguments are None, please, specify not None arguments.")
-
-        # TODO: add fields normalization
-        user = self.create_user(email, password, first_name, last_name, middle_name)
+    def create_superuser(self, **kwargs):
+        user = self.create_user(**kwargs)
         user.is_admin = True
-        user.save(using=self._db)
+        user.save(using=self.db)
 
         return user
 
