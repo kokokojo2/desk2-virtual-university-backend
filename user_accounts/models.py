@@ -55,7 +55,6 @@ class UserAccount(AbstractBaseUser):
 
     @property
     def profile(self):
-        model = None
         try:
             model = self.student_profile
             return model
