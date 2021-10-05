@@ -59,3 +59,22 @@ class UserAccount(AbstractBaseUser):
 
     def __str__(self):
         return f'{self.last_name} {self.first_name}'
+
+
+class ProfileType(models.Model):
+    user = models.OneToOneField(UserAccount, related_name='user', on_delete=models.CASCADE)
+
+
+class TeacherProfile(models.Model):
+    scientific_degree = models.CharField(max_length=128)
+    position = models.CharField(max_length=128)
+    user = models.OneToOneField(ProfileType, related_name='teacher_profile', on_delete=models.CASCADE)
+
+
+class StudentProfile(models.Model):
+    student_card_id = models.BigIntegerField()
+    user = models.OneToOneField(ProfileType, related_name='student_profile', on_delete=models.CASCADE)
+    # TODO: add foreign key to group
+
+
+
