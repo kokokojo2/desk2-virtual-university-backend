@@ -3,6 +3,7 @@ from functools import partial
 from django.db import models
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 
+from university_structures.models import Department, Group
 from utils.normalizers import Normalizer
 from utils.validators import get_regex_validator, validate_number_len
 
@@ -48,7 +49,7 @@ class UserAccount(AbstractBaseUser):
     is_active = models.BooleanField(default=False)
     is_admin = models.BooleanField(default=False)
 
-    # TODO: add foreign key to a department
+    department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL)
     USERNAME_FIELD = 'email'
 
     objects = UserAccountManager()
@@ -89,7 +90,9 @@ class TeacherProfile(models.Model):
 class StudentProfile(models.Model):
     student_card_id = models.BigIntegerField(validators=[partial(validate_number_len, digits_number=8)])
     user = models.OneToOneField(UserAccount, related_name='student_profile', on_delete=models.CASCADE)
-    # TODO: add foreign key to group
+
+    group = models.ForeignKey(Group, null=True, on_delete=models.SET_NULL)
+
 
 
 
