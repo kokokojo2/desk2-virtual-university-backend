@@ -40,3 +40,17 @@ class Group(models.Model):
 
     def __str__(self):
         return f'{self.name}'
+
+
+class Degree(models.Model):
+    name = models.CharField(max_length=128, unique=True, validators=[get_regex_validator('name')])
+
+    def __str__(self):
+        return f'{self.name}'
+
+
+class Position(models.Model):
+    name = models.CharField(max_length=128, unique=True, validators=[get_regex_validator('name')])
+
+    def __str__(self):
+        return f'{self.name}'
