@@ -1,9 +1,11 @@
 from django.db import models
-from django.core.validators import MinLengthValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
+
+from utils.validators import get_regex_validator
 
 
 class Faculty(models.Model):
-    title = models.CharField(max_length=128, unique=True, validators=[MinLengthValidator(2)])
+    title = models.CharField(max_length=128, unique=True, validators=[get_regex_validator('title')])
     description = models.TextField(blank=True)
 
     def __str__(self):
@@ -11,7 +13,7 @@ class Faculty(models.Model):
 
 
 class Department(models.Model):
-    title = models.CharField(max_length=128, unique=True, validators=[MinLengthValidator(2)])
+    title = models.CharField(max_length=128, unique=True, validators=[get_regex_validator('title')])
     description = models.TextField(blank=True)
     faculty = models.ForeignKey(Faculty, on_delete=models.CASCADE)
 
@@ -20,7 +22,7 @@ class Department(models.Model):
 
 
 class Speciality(models.Model):
-    title = models.CharField(max_length=128, unique=True, validators=[MinLengthValidator(2)])
+    title = models.CharField(max_length=128, unique=True, validators=[get_regex_validator('title')])
     code = models.PositiveSmallIntegerField()
 
     def __str__(self):
@@ -28,8 +30,10 @@ class Speciality(models.Model):
 
 
 class Group(models.Model):
-    name = models.CharField(max_length=5)
-    study_year = models.PositiveSmallIntegerField()
+    name = models.CharField(max_length=5, validators=[
+        get_regex_validator('group name', custom_pattern='[А-Я][А-Я]-[0-9][0-9]$')
+    ])
+    study_year = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(6)])
 
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     speciality = models.ForeignKey(Speciality, on_delete=models.CASCADE)
