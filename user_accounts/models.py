@@ -51,9 +51,10 @@ class UserAccount(AbstractBaseUser):
     is_admin = models.BooleanField(default=False)
 
     department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL)
-    USERNAME_FIELD = 'email'
-
     objects = UserAccountManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'middle_name']
 
     @property
     def is_staff(self):
