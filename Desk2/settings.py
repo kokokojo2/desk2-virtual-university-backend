@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
 
     'user_accounts',
     'university_structures',
@@ -73,6 +74,12 @@ DATABASES = {
         'HOST': config('DATABASE_HOST', default=''),
         'PORT': config('DATABASE_PORT', default=''),
     }
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
 }
 
 
