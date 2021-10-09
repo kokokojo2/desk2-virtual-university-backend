@@ -1,9 +1,11 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
+from django.shortcuts import get_object_or_404
 
-from .utils import get_serializer_for_profile
+from .utils import get_serializer_for_profile, get_serializer_for_profile_obj
 from .serializers import UserAccountSerializer
+from .models import UserAccount
 
 
 class AuthenticationViewSet(ViewSet):
@@ -41,10 +43,46 @@ class AuthenticationViewSet(ViewSet):
         return Response(response_dict, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, pk=None):
-        pass
+        queryset = UserAccount.objects.select_related('teacher_profile', 'student_profile')
+
+        if request.user.pk == pk:
+            user = request.user
+        else:
+            user = get_object_or_404(queryset, pk=pk)
+
+        user_serializer = UserAccountSerializer(instance=user)
+        profile_serializer = get_serializer_for_profile_obj(user.profile)
+
+        result = profile_serializer.data
+        result.update(user_serializer.data)
+
+        return Response(result)
 
     def update(self, request, pk=None):
-        pass
+        queryset = UserAccount.objects.select_related('teacher_profile', 'student_profile')
+
+        if request.user.pk == pk:
+            user = request.user
+        else:
+            user = get_object_or_404(queryset, pk=pk)
+
+        user_serializer = UserAccountSerializer(instance=user, data=request.data)
+        profile_serializer = get_serializer_for_profile_obj(user.profile, request_data=request.data)
+
+        if user_serializer.is_valid():
+            user_serializer.save()
+        else:
+            return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        if profile_serializer.is_valid():
+            profile_serializer.save()
+        else:
+            return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        result = profile_serializer.data
+        result.update(user_serializer.data)
+
+        return Response(result, status=status.HTTP_200_OK)
 
     def partial_update(self, request, pk=None):
         pass
