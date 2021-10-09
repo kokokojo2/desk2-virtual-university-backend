@@ -23,7 +23,6 @@ class NormalizedModelSerializer(ModelSerializer):
         super().__init__(**kwargs)
         rules_for_type = getattr(self.Meta, 'normalize_for_type', {})
         rules_for_field = getattr(self.Meta, 'normalize_for_field', {})
-        print(rules_for_type, rules_for_field)
 
         for key, func in chain(rules_for_field.items(), rules_for_type.items()):
             if not callable(func):
