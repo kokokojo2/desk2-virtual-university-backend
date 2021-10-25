@@ -2,8 +2,9 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 
-from .utils import get_serializer_for_profile, get_serializer_for_profile_obj
+from .utils import get_serializer_for_profile, get_serializer_for_profile_obj, serializer_check_save
 from .serializers import UserAccountSerializer
 from .models import UserAccount
 
@@ -13,9 +14,15 @@ class AuthenticationViewSet(ViewSet):
     Note: ViewSet base class instead of ModelViewSet is used to implement management of user and profile models in one
     request.
     """
+    def _get_user_model(self, request, pk):
+        queryset = UserAccount.objects.select_related('teacher_profile', 'student_profile')
 
-    def list(self, request):
-        pass
+        if request is not None and request.user.pk == pk:
+            user = request.user
+        else:
+            user = get_object_or_404(queryset, pk=pk)
+
+        return user
 
     def create(self, request):
         user_serializer = UserAccountSerializer(data=request.data)
