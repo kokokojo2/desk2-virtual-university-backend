@@ -34,15 +34,14 @@ class AuthenticationViewSet(ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if user_serializer.is_valid():
-            user_object = user_serializer.save(password=request.data['password'])
-        else:
-            return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            user_saved, result = serializer_check_save(user_serializer, True, password=request.data['password'])
+            if not user_saved:
+                return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
-        if profile_serializer.is_valid():
-            profile_serializer.save(user=user_object)
-        else:
-            return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            profile_saved, result = serializer_check_save(profile_serializer, True, user=result)
+            if not profile_saved:
+                return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
         response_dict = user_serializer.data
         response_dict.update(profile_serializer.data)
@@ -50,12 +49,7 @@ class AuthenticationViewSet(ViewSet):
         return Response(response_dict, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, pk=None):
-        queryset = UserAccount.objects.select_related('teacher_profile', 'student_profile')
-
-        if request.user.pk == pk:
-            user = request.user
-        else:
-            user = get_object_or_404(queryset, pk=pk)
+        user = self._get_user_model(request, pk)
 
         user_serializer = UserAccountSerializer(instance=user)
         profile_serializer = get_serializer_for_profile_obj(user.profile)
@@ -66,25 +60,19 @@ class AuthenticationViewSet(ViewSet):
         return Response(result)
 
     def update(self, request, pk=None):
-        queryset = UserAccount.objects.select_related('teacher_profile', 'student_profile')
-
-        if request.user.pk == pk:
-            user = request.user
-        else:
-            user = get_object_or_404(queryset, pk=pk)
+        user = self._get_user_model(request, pk)
 
         user_serializer = UserAccountSerializer(instance=user, data=request.data)
         profile_serializer = get_serializer_for_profile_obj(user.profile, request_data=request.data)
 
-        if user_serializer.is_valid():
-            user_serializer.save()
-        else:
-            return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        with transaction.atomic():
+            user_saved, result = serializer_check_save(user_serializer, True)
+            if not user_saved:
+                return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
-        if profile_serializer.is_valid():
-            profile_serializer.save()
-        else:
-            return Response(profile_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            profile_saved, result = serializer_check_save(profile_serializer, True)
+            if not profile_saved:
+                return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
         result = profile_serializer.data
         result.update(user_serializer.data)
