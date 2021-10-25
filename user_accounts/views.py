@@ -92,7 +92,25 @@ class AuthenticationViewSet(ViewSet):
         return Response(result, status=status.HTTP_200_OK)
 
     def partial_update(self, request, pk=None):
-        pass
+        user = self._get_user_model(request, pk)
+
+        user_serializer = UserAccountSerializer(instance=user, data=request.data, partial=True)
+        profile_serializer = get_serializer_for_profile_obj(user.profile, request_data=request.data, partial=True)
+
+        with transaction.atomic():
+            user_saved, result = serializer_check_save(user_serializer, True)
+            if not user_saved:
+                return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+            profile_saved, result = serializer_check_save(profile_serializer, True)
+            if not profile_saved:
+                return Response(result, status=status.HTTP_400_BAD_REQUEST)
+
+        result = profile_serializer.data
+        result.update(user_serializer.data)
+
+        return Response(result, status=status.HTTP_200_OK)
 
     def destroy(self, request, pk=None):
-        pass
+        self._get_user_model(None, pk).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
