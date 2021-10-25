@@ -3,9 +3,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from rest_framework.views import APIView
 
 from .utils import get_serializer_for_profile, get_serializer_for_profile_obj, serializer_check_save
-from .serializers import UserAccountSerializer
+from .serializers import UserAccountSerializer, PasswordSerializer
 from .models import UserAccount
 
 
@@ -108,3 +109,14 @@ class AuthenticationViewSet(ViewSet):
     def destroy(self, request, pk=None):
         self._get_user_model(None, pk).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ChangePasswordView(APIView):
+
+    def post(self, request):
+        password_serializer = PasswordSerializer(data=request.data, instance=request.user)
+        if password_serializer.is_valid():
+            password_serializer.save()
+            return Response({'status': 'Password changed'}, status=status.HTTP_204_NO_CONTENT)
+
+        return Response(password_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
