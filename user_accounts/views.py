@@ -35,7 +35,13 @@ class AuthenticationViewSet(ViewSet):
             )
 
         with transaction.atomic():
-            user_saved, result = serializer_check_save(user_serializer, True, password=request.data['password'])
+            user_saved, result = serializer_check_save(
+                user_serializer,
+                True,
+                password=request.data['password'],
+                email=request.data['email']
+            )
+
             if not user_saved:
                 return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
