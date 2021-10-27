@@ -1,6 +1,8 @@
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from datetime import datetime
 
+from .models import UserAccount
+
 
 def round_timestamp(timestamp, minute):
     """
@@ -17,6 +19,16 @@ def round_timestamp(timestamp, minute):
     )
 
     return datetime.timestamp(round_to_minutes)
+
+
+def check_token(token_gen_class, uid, token):
+    token_generator = token_gen_class()
+    try:
+        user = UserAccount.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, UserAccount.DoesNotExist):
+        user = None
+
+    return user and token_generator.check_token(user, token)
 
 
 class EmailConfirmationTokenGenerator(PasswordResetTokenGenerator):
