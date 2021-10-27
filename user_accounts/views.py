@@ -1,3 +1,8 @@
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import status
@@ -5,9 +10,10 @@ from django.shortcuts import get_object_or_404
 from django.db import transaction
 from rest_framework.views import APIView
 
-from .utils import get_serializer_for_profile, get_serializer_for_profile_obj, serializer_check_save
+from .utils import get_serializer_for_profile, get_serializer_for_profile_obj, serializer_check_save, confirm_user_email
 from .serializers import UserAccountSerializer, PasswordSerializer
 from .models import UserAccount
+from .tokens import check_token, EmailConfirmationTokenGenerator, PasswordChangeTokenGenerator, TwoFATokenGenerator
 
 
 class AuthenticationViewSet(ViewSet):
@@ -34,7 +40,6 @@ class AuthenticationViewSet(ViewSet):
                 {'profile_type': 'Invalid profile type. Should be student or teacher.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
         with transaction.atomic():
             user_saved, result = serializer_check_save(
                 user_serializer,
@@ -120,3 +125,22 @@ class ChangePasswordView(APIView):
             return Response({'status': 'Password changed'}, status=status.HTTP_204_NO_CONTENT)
 
         return Response(password_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CheckTokenView(APIView):
+
+    def post(self, request, token_type, uid):
+        token_generator = None
+        if token_type == 'email-confirm':
+            token_generator = EmailConfirmationTokenGenerator
+
+        if token_type == 'password-reset':
+            token_generator = PasswordChangeTokenGenerator
+
+        if token_type == 'twoFA-auth':
+            token_generator = TwoFATokenGenerator
+
+        if not token_generator:
+            return Response({'status': 'Invalid token type.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'token_valid': check_token(token_generator, uid, request.data['token'])}, status=status.HTTP_200_OK)
