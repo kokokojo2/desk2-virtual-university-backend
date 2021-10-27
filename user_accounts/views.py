@@ -40,24 +40,34 @@ class AuthenticationViewSet(ViewSet):
                 {'profile_type': 'Invalid profile type. Should be student or teacher.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        with transaction.atomic():
-            user_saved, result = serializer_check_save(
-                user_serializer,
-                True,
-                password=request.data['password'],
-                email=request.data['email']
-            )
 
-            if not user_saved:
-                return Response(result, status=status.HTTP_400_BAD_REQUEST)
+        user_saved, user = serializer_check_save(
+            user_serializer,
+            True,
+            password=request.data['password'],
+            email=request.data['email']
+        )
 
-            profile_saved, result = serializer_check_save(profile_serializer, True, user=result)
-            if not profile_saved:
-                return Response(result, status=status.HTTP_400_BAD_REQUEST)
+        if not user_saved:
+            return Response(user, status=status.HTTP_400_BAD_REQUEST)
+
+        profile_saved, result = serializer_check_save(profile_serializer, True, user=user)
+        if not profile_saved:
+            return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
         response_dict = user_serializer.data
         response_dict.update(profile_serializer.data)
 
+        token_generator = EmailConfirmationTokenGenerator()
+
+        email_body = render_to_string('email/email-confirm.html', {
+            'user': user,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': token_generator.make_token(user),
+            'domain': get_current_site(request).domain
+        })
+
+        send_mail('Activate your account.', email_body, 'noreply@desk2.com', [user.email], fail_silently=False)
         return Response(response_dict, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, pk=None):
@@ -144,3 +154,32 @@ class CheckTokenView(APIView):
             return Response({'status': 'Invalid token type.'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'token_valid': check_token(token_generator, uid, request.data['token'])}, status=status.HTTP_200_OK)
+
+
+class SendTokenView(APIView):
+
+    def post(self, request, token_type):
+        uid = request.data['id']
+        token_generator = None
+
+        try:
+            user = UserAccount.objects.get(pk=uid)
+        except UserAccount.DoesNotExist:
+            return Response({'status': 'User with this uid does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if token_type == 'password-reset':
+            token_generator = PasswordChangeTokenGenerator()
+        if token_type == 'email-confirm':
+            token_generator = EmailConfirmationTokenGenerator()
+
+        if not token_generator:
+            return Response({'status': 'Invalid token type.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        email_body = render_to_string(f'email/{token_type}.html', {
+            'user': user,
+            'token': token_generator.make_token(user),
+        })
+
+        send_mail('Activate your account.', email_body, 'noreply@desk2.com', [user.email], fail_silently=False)
+
+        return Response({'status': 'Token sent.'}, status=status.HTTP_200_OK)
