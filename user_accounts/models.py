@@ -47,8 +47,11 @@ class UserAccount(AbstractBaseUser):
 
     created = models.DateTimeField(auto_now_add=True)
     edited = models.DateTimeField(auto_now=True)
-    is_active = models.BooleanField(default=False)
+
+    is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
+    email_confirmed = models.BooleanField(default=False)
+    twoFA_enabled = models.BooleanField(default=True)
 
     department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL)
     objects = UserAccountManager()
@@ -84,8 +87,10 @@ class UserAccount(AbstractBaseUser):
 
 
 class TeacherProfile(models.Model):
+    # TODO: change to foreign keys
     scientific_degree = models.CharField(max_length=128, validators=[get_regex_validator('scientific degree')])
     position = models.CharField(max_length=128, validators=[get_regex_validator('scientific degree')])
+
     user = models.OneToOneField(UserAccount, related_name='teacher_profile', on_delete=models.CASCADE)
 
 
