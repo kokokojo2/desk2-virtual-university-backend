@@ -225,3 +225,26 @@ class SendTokenView(APIView):
         send_mail('Desk2 Team', email_body, 'noreply@desk2.com', [user.email], fail_silently=False)
 
         return Response({'status': 'Token sent.'}, status=status.HTTP_200_OK)
+
+
+class TokenObtainView(TokenObtainPairView):
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+
+        user = authenticate(username=request.data['email'], password=request.data['password'])
+
+        if not user.email_confirmed:
+            return Response({'status': 'Mail verification is needed.', 'uid': user.pk},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        elif user.twoFA_enabled:
+            if '2FA_code' not in request.data.keys():
+                send_2fa_token.run(user.pk)  # TODO: change to async mode after SMTP server will ge configured
+                return Response({'status': '2FA verification is needed.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+            token_generator = TwoFATokenGenerator()
+            if not token_generator.check_token(user, request.data['2FA_code']):
+                return Response({'status': '2FA token is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return response
