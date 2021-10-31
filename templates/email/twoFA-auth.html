@@ -1,0 +1,10 @@
+{% autoescape off %}
+    Dear {{ user.first_name }} {{ user.last_name }}
+    This someone tries to log in to your personal account at Desk2.
+
+    If this is you, please, use the code below to finish logging in.<br>
+
+    <h1>{{ token }}</h1>
+
+    If you do not attempted to log in on the site, you can simply ignore this message or contact our support center.
+{% endautoescape %}
