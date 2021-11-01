@@ -11,7 +11,7 @@ class UserAccountSerializer(NormalizedModelSerializer):
     class Meta:
         model = UserAccount
         exclude = ['password']
-        read_only_fields = ['is_active', 'is_admin', 'edited', 'created', 'last_login', 'id', 'email']
+        read_only_fields = ['is_active', 'is_admin', 'edited', 'created', 'last_login', 'id', 'email', 'email_confirmed']
         normalize_for_type = {str: Normalizer.first_capital}
 
     def save(self, **kwargs):
