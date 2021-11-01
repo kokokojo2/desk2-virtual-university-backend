@@ -55,6 +55,8 @@ class PasswordSerializer(Serializer):
     def validate_new_password(self, value):
         validate_password(value, user=self.instance)
 
+        return value
+
     def update(self, instance, validated_data):
         instance.set_password(validated_data['new_password'])
         instance.save()
