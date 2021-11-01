@@ -62,9 +62,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'Desk2.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
+# Databases
 DATABASES = {
     'default': {
         'ENGINE': config('DATABASE_ENGINE', default='django.db.backends.sqlite3'),
@@ -75,6 +73,10 @@ DATABASES = {
         'PORT': config('DATABASE_PORT', default=''),
     }
 }
+
+REDIS_HOST = config('REDIS_HOST', default='localhost')
+REDIS_PORT = config('REDIS_PORT', default='6379')
+REDIS_TOKENS_STORAGE = 0
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -92,7 +94,6 @@ REST_FRAMEWORK = {
 
 
 # Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 AUTH_USER_MODEL = 'user_accounts.UserAccount'
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -125,13 +126,22 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
-
 STATIC_URL = '/static/'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
+# auth app settings
+REDIS_STORED_TOKENS = True
+
+PASSWORD_RESET_TOKEN_LENGTH = 7
+EMAIL_CONFIRM_TOKEN_LENGTH = 7
+TWO_FA_TOKEN_LENGTH = 7
+
+# in seconds
+PASSWORD_RESET_TOKEN_TIMEOUT = 5 * 60
+EMAIL_CONFIRM_TOKEN_TIMEOUT = 5 * 60
+TWO_FA_TOKEN_TIMEOUT = 5 * 60
