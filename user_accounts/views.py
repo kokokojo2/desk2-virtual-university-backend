@@ -1,17 +1,19 @@
+from datetime import datetime
+
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
+from django.core.validators import validate_email, ValidationError
+from django.contrib.auth import authenticate
+
 from rest_framework.viewsets import ViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.shortcuts import get_object_or_404
-from django.core.validators import validate_email, ValidationError
 from rest_framework.views import APIView
 from rest_framework.decorators import action
+
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate
-from datetime import datetime
 
 from .utils import get_serializer_for_profile, get_serializer_for_profile_obj, serializer_check_save
 from .serializers import UserAccountSerializer, PasswordSerializer
@@ -25,16 +27,6 @@ class AuthenticationViewSet(ViewSet):
     Note: ViewSet base class instead of ModelViewSet is used to implement management of user and profile models in one
     request.
     """
-
-    def _get_user_model(self, request, pk):
-        queryset = UserAccount.objects.select_related('teacher_profile', 'student_profile')
-
-        if request is not None and request.user.pk == pk:
-            user = request.user
-        else:
-            user = get_object_or_404(queryset, pk=pk)
-
-        return user
 
     def get_permissions(self):
         permission_classes = []
@@ -55,7 +47,7 @@ class AuthenticationViewSet(ViewSet):
 
         user_saved, user = serializer_check_save(
             user_serializer,
-            True,
+            False,
             password=request.data['password'],
             email=request.data['email']
         )
@@ -63,7 +55,7 @@ class AuthenticationViewSet(ViewSet):
         if not user_saved:
             return Response(user, status=status.HTTP_400_BAD_REQUEST)
 
-        profile_saved, result = serializer_check_save(profile_serializer, True, user=user)
+        profile_saved, result = serializer_check_save(profile_serializer, False, user=user)
 
         if not profile_saved:
             user.delete()
@@ -151,11 +143,14 @@ class ResetPasswordView(APIView):
         token_generator = PasswordChangeTokenGenerator()
         try:
             user = UserAccount.objects.get(email=request.data['email'])
-        except UserAccount.DoesNotExist:
-            user = None
+            token = request.data['token']
+            password = request.data['password']
+        except (UserAccount.DoesNotExist, KeyError):
+            return Response({'status': 'password, token or email fields are not specified.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        if user and token_generator.check_token(request.data['token'], user):
-            user.set_password(request.data['password'])
+        if user and password and token_generator.check_token(user, token, remove_from_storage=True):
+            user.set_password(password)
             user.save()
 
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -171,7 +166,7 @@ class ChangeEmailView(APIView):
 
         try:
             validate_email(request.data['email'])
-        except ValidationError:
+        except (ValidationError, KeyError):
             return Response({'status': 'This email address is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user.email = request.data['email']
@@ -182,16 +177,19 @@ class ChangeEmailView(APIView):
 
 
 class ConfirmEmailView(APIView):
+    throttle_scope = 'token-check'
+
     def post(self, request):
         token_generator = EmailConfirmationTokenGenerator()
 
         try:
             user = UserAccount.objects.get(email=request.data['email'])
-        except UserAccount.DoesNotExist:
+            token = request.data['token']
+        except (UserAccount.DoesNotExist, KeyError):
             user = None
+            token = ''
 
-        if user and token_generator.check_token(user, request.data['token']):
-
+        if user and token_generator.check_token(user, token, remove_from_storage=True):
             user.email_confirmed = True
             user.last_login = datetime.now()
             user.save()
@@ -204,10 +202,18 @@ class ConfirmEmailView(APIView):
 
         return Response({'status': 'Invalid email or token.'}, status=status.HTTP_400_BAD_REQUEST)
 
+
 class CheckTokenView(APIView):
+    throttle_scope = 'token-check'
 
     def post(self, request, token_type):
         token_generator = None
+        try:
+            token = request.data['token']
+            email = request.data['email']
+        except KeyError:
+            return Response({'status': 'Email or token is not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+
         if token_type == 'email-confirm':
             token_generator = EmailConfirmationTokenGenerator
 
@@ -220,7 +226,7 @@ class CheckTokenView(APIView):
         if not token_generator:
             return Response({'status': 'Invalid token type.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'token_valid': check_token(token_generator, request.data['email'], request.data['token'])}
+        return Response({'token_valid': check_token(token_generator, email, token)}
                         , status=status.HTTP_200_OK)
 
 
@@ -252,6 +258,7 @@ class SendTokenView(APIView):
 
 
 class TokenObtainView(TokenObtainPairView):
+    throttle_scope = 'token-check'
 
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
