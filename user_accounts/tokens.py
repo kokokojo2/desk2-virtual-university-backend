@@ -1,7 +1,15 @@
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from datetime import datetime
 
+from django.core.exceptions import ImproperlyConfigured
+import redis
+
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.conf import settings
+
 from .models import UserAccount
+
+if settings.REDIS_STORED_TOKENS:
+    redis_client = redis.Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT, db=settings.REDIS_TOKENS_STORAGE)
 
 
 def round_timestamp(timestamp, minute):
@@ -31,49 +39,89 @@ def check_token(token_gen_class, email, token):
     return user and token_generator.check_token(user, token)
 
 
-class EmailConfirmationTokenGenerator(PasswordResetTokenGenerator):
+class RedisTokenMixin:
+    """
+    Provides functionality for storing tokens in redis storage.
+    """
+    def _get_redis_key_basename(self):
+        try:
+            return getattr(self, 'redis_key_basename')
+        except AttributeError:
+            raise ImproperlyConfigured('Token generator that inherits from RedisTokenMixin class'
+                                       ' requires redis_key_basename class variable to be defined.')
+
+    def _get_token_length(self):
+        try:
+            return getattr(self, 'token_length')
+        except AttributeError:
+            raise ImproperlyConfigured('Token generator that inherits from RedisTokenMixin class'
+                                       ' requires token_length class variable to be defined.')
+
+    def _get_token_timeout(self):
+        try:
+            return getattr(self, 'token_timeout')
+        except AttributeError:
+            raise ImproperlyConfigured('Token generator that inherits from RedisTokenMixin class'
+                                       ' requires token_timeout class variable to be defined.')
+
+    def make_token(self, user):
+        token = super().make_token(user)[-self._get_token_length():]
+        if settings.REDIS_STORED_TOKENS:
+            redis_client.set(
+                str(self._get_redis_key_basename() + '_' + str(user.pk)),
+                token,
+                ex=self._get_token_timeout()
+            )
+
+        return token
+
+    def check_token(self, user, token, remove_from_storage=False):
+        if settings.REDIS_STORED_TOKENS:
+            redis_key_name = self._get_redis_key_basename() + '_' + str(user.pk)
+            genuine_token = redis_client.get(redis_key_name)
+            if not genuine_token:
+                return False
+
+            genuine_token = genuine_token.decode('utf-8')
+            if remove_from_storage:
+                redis_client.delete(redis_key_name)
+
+            return token == genuine_token
+
+        return token == self.make_token(user)
+
+
+class EmailConfirmationTokenGenerator(RedisTokenMixin, PasswordResetTokenGenerator):
     """
     Used to generate 7-digit token for email confirmation.
     """
+    redis_key_basename = 'email'
+    token_length = settings.EMAIL_CONFIRM_TOKEN_LENGTH
+    token_timeout = settings.EMAIL_CONFIRM_TOKEN_TIMEOUT
 
-    # TODO: consider storing tokens into redis temporary storage
     def _make_hash_value(self, user, timestamp):
         return str(user.pk) + str(round_timestamp(timestamp, 5)) + str(user.is_active)
 
-    def make_token(self, user):
-        return super().make_token(user)[-7:]
 
-    def check_token(self, user, token):
-        return token == self.make_token(user)
-
-
-class PasswordChangeTokenGenerator(PasswordResetTokenGenerator):
+class PasswordChangeTokenGenerator(RedisTokenMixin, PasswordResetTokenGenerator):
     """
     Used to generate 7-digit token for password reset.
     """
+    redis_key_basename = 'password'
+    token_length = settings.PASSWORD_RESET_TOKEN_LENGTH
+    token_timeout = settings.PASSWORD_RESET_TOKEN_TIMEOUT
 
-    # TODO: consider storing tokens into redis temporary storage
     def _make_hash_value(self, user, timestamp):
         return str(user.pk) + str(round_timestamp(timestamp, 5)) + str(user.password)
 
-    def make_token(self, user):
-        return super().make_token(user)[-7:]
 
-    def check_token(self, user, token):
-        return token == self.make_token(user)
-
-
-class TwoFATokenGenerator(PasswordResetTokenGenerator):
+class TwoFATokenGenerator(RedisTokenMixin, PasswordResetTokenGenerator):
     """
     Used to generate 7-digit token for password reset.
     """
+    redis_key_basename = 'password'
+    token_length = settings.TWO_FA_TOKEN_LENGTH
+    token_timeout = settings.TWO_FA_TOKEN_TIMEOUT
 
-    # TODO: consider storing tokens into redis temporary storage
     def _make_hash_value(self, user, timestamp):
         return str(user.pk) + str(round_timestamp(timestamp, 5))
-
-    def make_token(self, user):
-        return super().make_token(user)[-7:]
-
-    def check_token(self, user, token):
-        return token == self.make_token(user)
