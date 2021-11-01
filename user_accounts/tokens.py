@@ -21,10 +21,10 @@ def round_timestamp(timestamp, minute):
     return datetime.timestamp(round_to_minutes)
 
 
-def check_token(token_gen_class, uid, token):
+def check_token(token_gen_class, email, token):
     token_generator = token_gen_class()
     try:
-        user = UserAccount.objects.get(pk=uid)
+        user = UserAccount.objects.get(email=email)
     except (TypeError, ValueError, OverflowError, UserAccount.DoesNotExist):
         user = None
 
