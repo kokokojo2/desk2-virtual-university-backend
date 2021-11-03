@@ -64,6 +64,7 @@ class Post(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     edited_at = models.DateTimeField(auto_now=True)
     published_at = models.DateTimeField()  # can be time in future for planned posts
+    is_archived = models.BooleanField(default=False)
 
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE)
     author = models.ForeignKey(CourseMember, on_delete=models.CASCADE)
