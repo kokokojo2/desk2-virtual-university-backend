@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.urls import path, include
 from courses.views import CourseViewSet,GradeViewSet,TaskViewSet,\
     ChapterViewSet,FacultyViewSet,DepartmentViewSet,CourseMemberViewSet,\
     AttachmentViewSet,StudentWorkViewSet
@@ -22,6 +23,6 @@ router.register('student_works', StudentWorkViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('auth/', include('user_accounts.urls'))
     path('api/', include(router.urls)),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]

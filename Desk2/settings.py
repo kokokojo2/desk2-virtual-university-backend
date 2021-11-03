@@ -23,6 +23,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
+
     'user_accounts',
     'university_structures',
     'courses',
@@ -60,24 +62,39 @@ TEMPLATES = [
 WSGI_APPLICATION = 'Desk2.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
-
+# Databases
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': config('DATABASE_NAME'),
-        'USER': config('DATABASE_USER'),
-        'PASSWORD': config('DATABASE_PASSWORD'),
-        'HOST': config('DATABASE_HOST'),
-        'PORT': config('DATABASE_PORT'),
+        'ENGINE': config('DATABASE_ENGINE', default='django.db.backends.sqlite3'),
+        'NAME': config('DATABASE_NAME', default='local_tests_db'),
+        'USER': config('DATABASE_USER', default=''),
+        'PASSWORD': config('DATABASE_PASSWORD', default=''),
+        'HOST': config('DATABASE_HOST', default=''),
+        'PORT': config('DATABASE_PORT', default=''),
+    }
+}
+
+REDIS_HOST = config('REDIS_HOST', default='localhost')
+REDIS_PORT = config('REDIS_PORT', default='6379')
+REDIS_TOKENS_STORAGE = 0
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+
+    'DEFAULT_THROTTLE_RATES': {
+        'token-check': '15/minute',
     }
 }
 
 
 # Password validation
-# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
-
+AUTH_USER_MODEL = 'user_accounts.UserAccount'
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -109,11 +126,22 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
-
 STATIC_URL = '/static/'
 
 # Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+
+# auth app settings
+REDIS_STORED_TOKENS = True
+
+PASSWORD_RESET_TOKEN_LENGTH = 7
+EMAIL_CONFIRM_TOKEN_LENGTH = 7
+TWO_FA_TOKEN_LENGTH = 7
+
+# in seconds
+PASSWORD_RESET_TOKEN_TIMEOUT = 5 * 60
+EMAIL_CONFIRM_TOKEN_TIMEOUT = 5 * 60
+TWO_FA_TOKEN_TIMEOUT = 5 * 60
