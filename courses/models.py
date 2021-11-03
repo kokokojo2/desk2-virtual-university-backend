@@ -55,12 +55,26 @@ class Chapter(models.Model):
         return self.title
 
 
-class Task(models.Model):
-    title = models.CharField(max_length=63,
-                             validators=[validators.MinLengthValidator(4,'Please enter 4 or more characters')])
+class Post(models.Model):
+    title = models.CharField(max_length=128, validators=[MinLengthValidator(4)])
+    body = models.TextField()
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    edited_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField()  # can be time in future for planned posts
+
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE)
-    content = models.TextField()
-    # author = models.ForeignKey(Teacher,on_delete=models.CASCADE)
+    author = models.ForeignKey(CourseMember, on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
+
+
+class Material(Post):
+    pass
+
+
+class Task(Post):
     max_grade = models.PositiveSmallIntegerField(null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     edited_at = models.DateTimeField(auto_now=True)
