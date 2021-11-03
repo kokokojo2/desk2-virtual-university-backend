@@ -1,67 +1,54 @@
 from django.db import models
-from django.core import validators
+from django.core.validators import MinLengthValidator
+from django.conf import settings
 
-
-class Faculty(models.Model):
-    title = models.CharField(max_length=63,
-                             unique=True,
-                             validators=[validators.MinLengthValidator(2,'Please enter 2 or more characters')])
-    description = models.TextField(null=True,
-                                   #validators=[validators.MinLengthValidator(2, 'Please enter 2 or more characters')]
-                                   )
-
-    def __str__(self):
-        return self.title
-
-
-class Department(models.Model):
-    title = models.CharField(max_length=63,
-                             unique=True,
-                             validators=[validators.MinLengthValidator(2,'Please enter 2 or more characters')])
-    description = models.TextField(null=True,
-                                   #validators=[validators.MinLengthValidator(2, 'Please enter 2 or more characters')]
-                                   )
-    faculty = models.ForeignKey(Faculty, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.title
+from university_structures.models import Department, Speciality
 
 
 class Course(models.Model):
-    title = models.CharField(max_length=127,
-                             unique=False,
-                             validators=[validators.MinLengthValidator(2,'Please enter 2 or more characters')])
-    description = models.TextField(null=True,
-                                   #validators=[validators.MinLengthValidator(2, 'Please enter 2 or more characters')]
-                                   )
-    department = models.ForeignKey(Department,on_delete=models.CASCADE)
+    title = models.CharField(max_length=128, validators=[MinLengthValidator(2)])
+    description = models.TextField(blank=True)
+
+    ONGOING = 'O'
+    ARCHIVED = 'A'
+
     STATUSES = (
-        ('O', 'Ongoing'),
-        ('A', 'Archived'),
+        (ONGOING, 'Ongoing'),
+        (ARCHIVED, 'Archived'),
     )
-    status = models.CharField(max_length=1, choices=STATUSES)
+    status = models.CharField(max_length=1, choices=STATUSES, default=ONGOING)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL)
+    speciality = models.ForeignKey(Speciality, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.title
 
 
 class CourseMember(models.Model):
-    # user = models.ForeignKey(User,on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
+
+    STUDENT = 'S'
+    TEACHER = 'T'
+    AUDITOR = 'A'
+    OWNER = 'O'
+
     STATUSES = (
-        ('S', 'Student'),
-        ('T', 'Teacher'),
-        ('O', 'Owner'),
-        ('A', 'Auditor'),
+        (STUDENT, 'Student'),
+        (TEACHER, 'Teacher'),
+        (AUDITOR, 'Auditor'),
+        (OWNER, 'Owner'),
     )
-    status = models.CharField(max_length=1, choices=STATUSES)
+
+    role = models.CharField(max_length=1, choices=STATUSES)
 
 
 class Chapter(models.Model):
-    title = models.CharField(max_length=31,
-                             validators=[validators.MinLengthValidator(3,'Please enter 3 or more characters')])
+    title = models.CharField(max_length=128, validators=[MinLengthValidator(3)])
     description = models.TextField()
+
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -85,7 +72,7 @@ class Task(models.Model):
 
 
 class Attachment(models.Model):
-    task = models.ForeignKey(Task,on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
     file = models.FileField(upload_to='uploads/')
 
     def __str__(self):
@@ -93,27 +80,25 @@ class Attachment(models.Model):
 
 
 class StudentWork(models.Model):
-    task = models.ForeignKey(Task,on_delete=models.CASCADE)
-    course_member = models.ForeignKey(CourseMember,on_delete=models.CASCADE)
-    answer = models.TextField(null=True)
-    STATUSES = (
-        ('A', 'Assigned'),
-        ('S', 'Submitted'),
-        ('D', 'Deadline passed'),
-        ('G', 'Graded'),
-    )
-    status = models.CharField(max_length=1, choices=STATUSES)
-    # student_work.get_status_display()
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    owner = models.ForeignKey(CourseMember, on_delete=models.CASCADE)
 
-    def __str__(self):
-        return self.get_status_display()
+    ASSIGNED = 'A'
+    SUBMITTED = 'B'
+    GRADED = 'G'
+
+    STATUSES = (
+        (ASSIGNED, 'Assigned'),
+        (SUBMITTED, 'Submitted'),
+        (GRADED, 'Graded'),
+    )
+    status = models.CharField(max_length=1, choices=STATUSES, default=ASSIGNED)
+    answer = models.TextField(blank=True)
 
 
 class Grade(models.Model):
-    description = models.CharField(max_length=127)
-    work = models.ForeignKey(StudentWork, on_delete=models.CASCADE)
-    amount = models.PositiveSmallIntegerField(
-       # validators=[validators.MaxValueValidator(work.task.max_grade,'Grade can not be greater than maximum grade')]
-    )
-    # grader = models.ForeignKey(Teacher,on_delete=models.CASCADE)
+    description = models.CharField(max_length=128, blank=True)
+    amount = models.PositiveSmallIntegerField()  # TODO: implement max grade validation on serializer level
 
+    work = models.ForeignKey(StudentWork, on_delete=models.CASCADE)
+    grader = models.ForeignKey(CourseMember, on_delete=models.SET_NULL, null=True)
