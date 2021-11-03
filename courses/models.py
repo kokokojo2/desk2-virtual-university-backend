@@ -43,11 +43,13 @@ class CourseMember(models.Model):
     )
 
     role = models.CharField(max_length=1, choices=STATUSES)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class Chapter(models.Model):
     title = models.CharField(max_length=128, validators=[MinLengthValidator(3)])
     description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
 
@@ -76,9 +78,6 @@ class Material(Post):
 
 class Task(Post):
     max_grade = models.PositiveSmallIntegerField(null=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    edited_at = models.DateTimeField(auto_now=True)
-    post_date = models.DateTimeField()
     deadline = models.DateTimeField()
 
     def __str__(self):
@@ -108,11 +107,13 @@ class StudentWork(models.Model):
     )
     status = models.CharField(max_length=1, choices=STATUSES, default=ASSIGNED)
     answer = models.TextField(blank=True)
+    submitted_at = models.DateTimeField(null=True)
 
 
 class Grade(models.Model):
     description = models.CharField(max_length=128, blank=True)
     amount = models.PositiveSmallIntegerField()  # TODO: implement max grade validation on serializer level
+    created_at = models.DateTimeField(auto_now_add=True)
 
     work = models.ForeignKey(StudentWork, on_delete=models.CASCADE)
     grader = models.ForeignKey(CourseMember, on_delete=models.SET_NULL, null=True)
