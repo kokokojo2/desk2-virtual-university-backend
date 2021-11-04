@@ -3,10 +3,11 @@ from django.core.validators import MinLengthValidator
 from django.conf import settings
 
 from university_structures.models import Department, Speciality
+from utils.validators import get_regex_validator
 
 
 class Course(models.Model):
-    title = models.CharField(max_length=128, validators=[MinLengthValidator(2)])
+    title = models.CharField(max_length=128, validators=[MinLengthValidator(2), get_regex_validator('title')])
     description = models.TextField(blank=True)
 
     ONGOING = 'O'
@@ -47,7 +48,7 @@ class CourseMember(models.Model):
 
 
 class Chapter(models.Model):
-    title = models.CharField(max_length=128, validators=[MinLengthValidator(3)])
+    title = models.CharField(max_length=128, validators=[MinLengthValidator(3), get_regex_validator('title')])
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -58,7 +59,7 @@ class Chapter(models.Model):
 
 
 class Post(models.Model):
-    title = models.CharField(max_length=128, validators=[MinLengthValidator(4)])
+    title = models.CharField(max_length=128, validators=[MinLengthValidator(4), get_regex_validator('title')])
     body = models.TextField()
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -112,7 +113,7 @@ class StudentWork(models.Model):
 
 
 class Grade(models.Model):
-    description = models.CharField(max_length=128, blank=True)
+    description = models.CharField(max_length=128, blank=True, validators=[get_regex_validator('description')])
     amount = models.PositiveSmallIntegerField()  # TODO: implement max grade validation on serializer level
     created_at = models.DateTimeField(auto_now_add=True)
 
