@@ -22,7 +22,7 @@ class Course(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL)
-    speciality = models.ForeignKey(Speciality, on_delete=models.SET_NULL)
+    speciality = models.ForeignKey(Speciality, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.title
