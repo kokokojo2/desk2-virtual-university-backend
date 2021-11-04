@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinLengthValidator
 from django.conf import settings
+from datetime import datetime
 
 from university_structures.models import Department, Speciality
 from utils.validators import get_regex_validator
@@ -72,6 +73,10 @@ class Post(models.Model):
 
     class Meta:
         abstract = True
+
+    @property
+    def is_planned(self):
+        return self.published_at > datetime.now()
 
 
 class Material(Post):
