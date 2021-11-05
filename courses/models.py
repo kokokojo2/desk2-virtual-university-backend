@@ -84,7 +84,7 @@ class Material(Post):
 
 
 class Task(Post):
-    max_grade = models.PositiveSmallIntegerField(null=False)
+    max_grade = models.PositiveSmallIntegerField()
     deadline = models.DateTimeField()
 
     def __str__(self):
