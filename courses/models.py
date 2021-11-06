@@ -2,6 +2,8 @@ from django.db import models
 from django.core.validators import MinLengthValidator
 from django.conf import settings
 from datetime import datetime
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 
 from university_structures.models import Department, Speciality
 from utils.validators import get_regex_validator
@@ -92,7 +94,10 @@ class Task(Post):
 
 
 class Attachment(models.Model):
-    task = models.ForeignKey(Task, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey()
+
     file = models.FileField(upload_to='uploads/')
 
     def __str__(self):
