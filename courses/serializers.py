@@ -1,60 +1,69 @@
-from courses.models import Faculty,Department,Course,\
-    CourseMember,Task,Grade,Chapter,Attachment,StudentWork
-from django.contrib.auth.models import User, Group
+from courses.models import Course, CourseMember, Material, Task, Grade, Chapter, Attachment, StudentWork
 from rest_framework import serializers
 
-
-class FacultySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Faculty
-        fields = ('title', 'description')
+from utils.serializers import NormalizedModelSerializer, WriteOnCreationMixin
+from utils.normalizers import Normalizer
 
 
-class DepartmentSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Department
-        fields = ('title', 'description', 'faculty')
-
-
-class CourseSerializer(serializers.ModelSerializer):
+class CourseSerializer(NormalizedModelSerializer):
     class Meta:
         model = Course
-        fields = ('title', 'description', 'department','status','created_at')
+        fields = '__all__'
+        normalize_for_field = {'title': Normalizer.first_capital}
 
 
-class CourseMemberSerializer(serializers.ModelSerializer):
+class CourseMemberSerializer(WriteOnCreationMixin, serializers.ModelSerializer):
     class Meta:
         model = CourseMember
-        fields = ('course', 'status')
+        fields = '__all__'
+        create_only_fields = ['course']
+        read_only_fields = ['user']
 
 
-class TaskSerializer(serializers.ModelSerializer):
+class PostSerializer(NormalizedModelSerializer):
+
+    # TODO: check if is_planned property is included
+    class Meta:
+        fields = '__all__'
+        read_only_fields = ['author']
+        normalize_for_field = {'title': Normalizer.first_capital}
+
+
+class MaterialSerializer(PostSerializer):
+    class Meta:
+        model = Material
+
+
+class TaskSerializer(PostSerializer):
     class Meta:
         model = Task
-        fields = ('title', 'chapter', 'content',
-                  'max_grade', 'created_at', 'edited_at',
-                  'post_date', 'deadline')
 
 
-class ChapterSerializer(serializers.ModelSerializer):
+class ChapterSerializer(WriteOnCreationMixin, NormalizedModelSerializer):
     class Meta:
         model = Chapter
-        fields = ('title', 'description', 'course')
+        fields = '__all__'
+        create_only_fields = ['course']
+        normalize_for_field = {'title': Normalizer.first_capital}
 
 
 class AttachmentSerializer(serializers.ModelSerializer):
+    # TODO: add more user friendly serialization
     class Meta:
         model = Attachment
-        fields = ('task', 'file')
+        fields = '__all__'
 
 
 class StudentWorkSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentWork
-        fields = ('task', 'answer', 'status', 'course_member')
+        fields = '__all__'
+        read_only_fields = ['owner']
+        create_only_fields = ['task']
 
 
 class GradeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Grade
-        fields = ('work', 'description', 'amount')
+        fields = '__all__'
+        read_only_fields = ['grader']
