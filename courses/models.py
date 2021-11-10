@@ -31,10 +31,6 @@ class Course(models.Model):
     def __str__(self):
         return self.title
 
-    @property
-    def str_author_representation(self):
-        return str(self.owner)
-
 
 class CourseMember(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
