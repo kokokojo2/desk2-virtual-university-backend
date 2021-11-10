@@ -26,3 +26,22 @@ class IsOwnerOrReadOnly(BasePermission):
         raise AttributeError('Permission checker has not found the owner field of a given object. Make sure an '
                              'appropriate model has an owner field with the name from one of default_owner_lookup_fields'
                              ' or provide a custom owner field name by overriding custom_owner_lookup_fields.')
+
+
+class IsGlobalTeacher(BasePermission):
+    """
+    Grants permission to a request if request.user is a teacher (has a teacher profile type)
+    """
+    message = 'Only teacher account can perform this action.'
+
+    def has_permission(self, request, view):
+        return isinstance(request.user.profile, TeacherProfile)
+
+
+class IsGlobalTeacherOrReadOnly(IsGlobalTeacher):
+
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return True
+
+        return super().has_permission(request, view)
