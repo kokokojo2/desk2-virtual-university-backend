@@ -104,7 +104,7 @@ class UserAccount(AbstractBaseUser):
         return self.is_admin
 
     def __str__(self):
-        return f'{self.last_name} {self.first_name}'
+        return f'{self.first_name} {self.middle_name} {self.last_name}'
 
 
 class TeacherProfile(models.Model):
