@@ -1,5 +1,6 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 from itertools import chain
+from user_accounts.models import TeacherProfile
 
 
 class IsOwnerOrReadOnly(BasePermission):
@@ -19,7 +20,7 @@ class IsOwnerOrReadOnly(BasePermission):
 
         for potential_owner_field in chain(self.default_owner_lookup_fields, self.custom_owner_lookup_fields):
             owner = getattr(obj, potential_owner_field, None)
-            if not owner:
+            if owner:
                 return owner == request.user
 
         raise AttributeError('Permission checker has not found the owner field of a given object. Make sure an '
