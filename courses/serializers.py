@@ -6,6 +6,8 @@ from utils.normalizers import Normalizer
 
 
 class CourseSerializer(NormalizedModelSerializer):
+    owner = serializers.StringRelatedField()
+
     class Meta:
         model = Course
         fields = '__all__'
