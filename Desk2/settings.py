@@ -1,5 +1,6 @@
 from pathlib import Path
 from decouple import config
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -110,7 +111,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+SIMPLE_JWT = {
+    # WARNING! only for testing purpose TODO: change to a more sane value after tests
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=10),
+}
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
