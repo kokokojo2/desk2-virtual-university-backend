@@ -5,6 +5,7 @@ from datetime import datetime
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
+from user_accounts.models import UserAccount
 from university_structures.models import Department, Speciality
 from utils.validators import get_regex_validator
 
@@ -25,9 +26,14 @@ class Course(models.Model):
 
     department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL)
     speciality = models.ForeignKey(Speciality, null=True, on_delete=models.SET_NULL)
+    owner = models.ForeignKey(UserAccount, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
         return self.title
+
+    @property
+    def str_author_representation(self):
+        return str(self.owner)
 
 
 class CourseMember(models.Model):
@@ -43,7 +49,6 @@ class CourseMember(models.Model):
         (STUDENT, 'Student'),
         (TEACHER, 'Teacher'),
         (AUDITOR, 'Auditor'),
-        (OWNER, 'Owner'),
     )
 
     role = models.CharField(max_length=1, choices=STATUSES)
