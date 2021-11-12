@@ -1,9 +1,9 @@
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 
-from courses.models import Course, CourseMember, Task, Grade, Chapter, Attachment, StudentWork
+from courses.models import Course, CourseMember, Task, Grade, Chapter, Attachment, StudentWork, Material
 from courses.serializers import CourseSerializer, GradeSerializer, TaskSerializer, AttachmentSerializer, \
-    ChapterSerializer, CourseMemberSerializer, StudentWorkSerializer
+    ChapterSerializer, CourseMemberSerializer, StudentWorkSerializer, MaterialSerializer
 from .permissions import IsOwnerOrReadOnly, IsGlobalTeacherOrReadOnly
 
 
@@ -25,6 +25,11 @@ class CourseViewSet(ModelViewSet):
 class CourseMemberViewSet(ModelViewSet):
     queryset = CourseMember.objects.all()
     serializer_class = CourseMemberSerializer
+
+
+class MaterialViewSet(ModelViewSet):
+    queryset = Material.objects.all()
+    serializer_class = MaterialSerializer
 
 
 class TaskViewSet(ModelViewSet):
