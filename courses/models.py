@@ -31,6 +31,15 @@ class Course(models.Model):
     def __str__(self):
         return self.title
 
+    def is_user_enrolled(self, user):
+        return bool(self.coursemember_set.filter(user=user))
+
+    def get_course_member_if_exists(self, user):
+        try:
+            return self.coursemember_set.get(user=user)
+        except CourseMember.DoesNotExist:
+            return None
+
 
 class CourseMember(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
