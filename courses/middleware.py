@@ -5,6 +5,7 @@ from rest_framework.status import HTTP_403_FORBIDDEN
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import Course
+from .views import CourseMemberViewSet
 
 
 class CourseMiddleware:
@@ -27,14 +28,16 @@ class CourseMiddleware:
         authentication_result = jwt_authenticator.authenticate(request)
         user = authentication_result[0] if authentication_result else request.user
 
-        _, _, kwargs = resolve(request.path)  # to get url params of a path
+        view, _, kwargs = resolve(request.path)  # to get url params of a path
 
         if user.is_authenticated and 'course_id' in kwargs.keys():
             course = get_object_or_404(Course, pk=kwargs['course_id'])
 
             course_member = course.get_course_member_if_exists(user)
+
             if not course_member:
-                return JsonResponse({'detail': 'You are not enrolled in this course.'}, status=HTTP_403_FORBIDDEN)
+                if view.__name__ is not CourseMemberViewSet.__name__ or request.method != 'POST':
+                    return JsonResponse({'detail': 'You are not enrolled in this course.'}, status=HTTP_403_FORBIDDEN)
 
             setattr(request, 'course', course)
             setattr(request, 'course_member', course_member)
