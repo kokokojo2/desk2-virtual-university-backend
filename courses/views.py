@@ -1,10 +1,12 @@
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
+from rest_framework import mixins
 
 from courses.models import Course, CourseMember, Task, Grade, Chapter, Attachment, StudentWork, Material
 from courses.serializers import CourseSerializer, GradeSerializer, TaskSerializer, AttachmentSerializer, \
     ChapterSerializer, CourseMemberSerializer, StudentWorkSerializer, MaterialSerializer
-from .permissions import IsOwnerOrReadOnly, IsGlobalTeacherOrReadOnly
+from .permissions import IsGlobalTeacherOrReadOnly, BaseIsOwnerOrAllowMethods,\
+    BaseIsTeacherOrAllowMethods
 
 
 class CourseViewSet(ModelViewSet):
@@ -22,9 +24,28 @@ class CourseViewSet(ModelViewSet):
         return self.queryset
 
 
-class CourseMemberViewSet(ModelViewSet):
+class CourseMemberViewSet(mixins.CreateModelMixin,
+                          mixins.RetrieveModelMixin,
+                          mixins.ListModelMixin,
+                          mixins.DestroyModelMixin,
+                          GenericViewSet):
+
+    class IsOwnerOrForbidDelete(BaseIsOwnerOrAllowMethods):
+        owner_field = 'user'
+        allow_methods = SAFE_METHODS + ('POST', )
+
+    class IsTeacherOrForbidDelete(BaseIsTeacherOrAllowMethods):
+        allow_methods = SAFE_METHODS + ('POST', )
+
+    permission_classes = [IsAuthenticated, IsTeacherOrForbidDelete | IsOwnerOrForbidDelete]
     queryset = CourseMember.objects.all()
     serializer_class = CourseMemberSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(course=self.request.course).select_related('user')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user, course=self.request.course)
 
 
 class MaterialViewSet(ModelViewSet):
