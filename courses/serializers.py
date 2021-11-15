@@ -3,10 +3,11 @@ from rest_framework import serializers
 
 from utils.serializers import NormalizedModelSerializer, WriteOnCreationMixin
 from utils.normalizers import Normalizer
+from user_accounts.serializers import UserAccountPublicSerializer
 
 
 class CourseSerializer(NormalizedModelSerializer):
-    owner = serializers.StringRelatedField()
+    owner = UserAccountPublicSerializer(read_only=True)
 
     class Meta:
         model = Course
@@ -14,12 +15,19 @@ class CourseSerializer(NormalizedModelSerializer):
         normalize_for_field = {'title': Normalizer.first_capital}
 
 
-class CourseMemberSerializer(WriteOnCreationMixin, serializers.ModelSerializer):
+class CourseMemberSerializer(serializers.ModelSerializer):
+    user = UserAccountPublicSerializer(read_only=True)
+    role = serializers.SerializerMethodField()
+
     class Meta:
         model = CourseMember
-        fields = '__all__'
-        create_only_fields = ['course']
-        read_only_fields = ['user']
+        exclude = ['course']
+        read_only_fields = ['user', 'course', 'role']
+
+    def get_role(self, obj):
+        for status in obj.STATUSES:
+            if status[0] == obj.role:
+                return status[1]
 
 
 class PostSerializer(NormalizedModelSerializer):
