@@ -10,6 +10,10 @@ from .permissions import IsGlobalTeacherOrReadOnly, BaseIsOwnerOrAllowMethods,\
 
 
 class CourseViewSet(ModelViewSet):
+    class IsOwnerOrReadOnly(BaseIsOwnerOrAllowMethods):
+        owner_field = 'owner'
+        allow_methods = SAFE_METHODS
+
     permission_classes = [IsAuthenticated, IsGlobalTeacherOrReadOnly, IsOwnerOrReadOnly]
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
