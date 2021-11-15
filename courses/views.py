@@ -19,7 +19,8 @@ class CourseViewSet(ModelViewSet):
     serializer_class = CourseSerializer
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
+        course = serializer.save(owner=self.request.user)
+        CourseMember(user=self.request.user, course=course, role=CourseMember.TEACHER).save()
 
     def get_queryset(self):
         if self.request.GET.get('enrolled', False):
@@ -33,7 +34,6 @@ class CourseMemberViewSet(mixins.CreateModelMixin,
                           mixins.ListModelMixin,
                           mixins.DestroyModelMixin,
                           GenericViewSet):
-
     class IsOwnerOrForbidDelete(BaseIsOwnerOrAllowMethods):
         owner_field = 'user'
         allow_methods = SAFE_METHODS + ('POST', )
