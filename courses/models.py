@@ -59,7 +59,7 @@ class CourseMember(models.Model):
         (AUDITOR, 'auditor'),
     )
 
-    role = models.CharField(max_length=1, choices=STATUSES, default=STUDENT)
+    role = models.CharField(max_length=1, choices=STATUSES, default=AUDITOR)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
