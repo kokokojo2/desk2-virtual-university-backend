@@ -91,7 +91,9 @@ REST_FRAMEWORK = {
 
     'DEFAULT_THROTTLE_RATES': {
         'token-check': '15/minute',
-    }
+    },
+
+    'EXCEPTION_HANDLER': 'utils.exceptions.view_exception_handler',
 }
 
 
