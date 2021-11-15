@@ -65,3 +65,29 @@ class IsGlobalTeacherOrReadOnly(IsGlobalTeacher):
             return True
 
         return super().has_permission(request, view)
+
+
+class IsTeacher(BasePermission):
+    """
+    This permission should only be used on a course detail views.
+    """
+    message = 'You are not a teacher.'
+
+    def has_permission(self, request, view):
+        print('is teacher', request.course_member.role == CourseMember.TEACHER)
+        return request.course_member.role == CourseMember.TEACHER
+
+    def has_object_permission(self, request, view, obj):
+        # needs to be defined in order to use correctly bitwise operators on a permission classes
+        # https://github.com/encode/django-rest-framework/issues/7117
+        return self.has_permission(request, view)
+
+
+class BaseIsTeacherOrAllowMethods(IsTeacher):
+    allow_methods = ()
+
+    def has_permission(self, request, view):
+        if request.method in self.allow_methods:
+            return True
+
+        return super().has_permission(request, view)
