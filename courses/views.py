@@ -44,6 +44,7 @@ class CourseMemberViewSet(mixins.CreateModelMixin,
     permission_classes = [IsAuthenticated, IsTeacherOrForbidDelete | IsOwnerOrForbidDelete]
     queryset = CourseMember.objects.all()
     serializer_class = CourseMemberSerializer
+    db_exception_msg = 'You are already enrolled in this course.'
 
     def get_queryset(self):
         return self.queryset.filter(course=self.request.course).select_related('user')

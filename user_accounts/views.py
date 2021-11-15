@@ -27,6 +27,7 @@ class AuthenticationViewSet(ViewSet):
     Note: ViewSet base class instead of ModelViewSet is used to implement management of user and profile models in one
     request.
     """
+    db_exception_msg = 'User with this email already exists.'
 
     def get_permissions(self):
         permission_classes = []
