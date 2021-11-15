@@ -42,6 +42,9 @@ class Course(models.Model):
 
 
 class CourseMember(models.Model):
+    class Meta:
+        unique_together = ('user', 'course')
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
 
@@ -51,12 +54,12 @@ class CourseMember(models.Model):
     OWNER = 'O'
 
     STATUSES = (
-        (STUDENT, 'Student'),
-        (TEACHER, 'Teacher'),
-        (AUDITOR, 'Auditor'),
+        (STUDENT, 'student'),
+        (TEACHER, 'teacher'),
+        (AUDITOR, 'auditor'),
     )
 
-    role = models.CharField(max_length=1, choices=STATUSES)
+    role = models.CharField(max_length=1, choices=STATUSES, default=STUDENT)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
