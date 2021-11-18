@@ -62,6 +62,10 @@ class CourseMember(models.Model):
     role = models.CharField(max_length=1, choices=STATUSES, default=AUDITOR)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def is_teacher(self):
+        return self.role == self.TEACHER
+
 
 class Chapter(models.Model):
     title = models.CharField(max_length=128, validators=[MinLengthValidator(3), get_regex_validator('title')])
@@ -101,6 +105,10 @@ class Material(Post):
 class Task(Post):
     max_grade = models.PositiveSmallIntegerField()
     deadline = models.DateTimeField()
+
+    @property
+    def deadline_passed(self):
+        return self.deadline < timezone.now()
 
     def __str__(self):
         return self.title
