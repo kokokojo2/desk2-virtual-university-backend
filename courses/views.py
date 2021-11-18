@@ -4,7 +4,8 @@ from rest_framework import mixins
 
 from courses.models import Course, CourseMember, Task, Grade, Chapter, Attachment, StudentWork, Material
 from courses.serializers import CourseSerializer, GradeSerializer, TaskSerializer, AttachmentSerializer, \
-    ChapterSerializer, CourseMemberSerializer, StudentWorkSerializer, MaterialSerializer
+    ChapterRestrictedSerializer, ChapterUnrestrictedSerializer, CourseMemberSerializer, StudentWorkSerializer,\
+    MaterialSerializer
 from .permissions import IsGlobalTeacherOrReadOnly, BaseIsOwnerOrAllowMethods,\
     BaseIsTeacherOrAllowMethods
 
@@ -69,8 +70,23 @@ class GradeViewSet(ModelViewSet):
 
 
 class ChapterViewSet(ModelViewSet):
+    class IsTeacherOrReadOnly(BaseIsTeacherOrAllowMethods):
+        allow_methods = SAFE_METHODS
+
+    permission_classes = [IsAuthenticated, IsTeacherOrReadOnly]
     queryset = Chapter.objects.all()
-    serializer_class = ChapterSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(course=self.request.course).prefetch_related('material_set')
+
+    def perform_create(self, serializer):
+        serializer.save(course=self.request.course)
+
+    def get_serializer_class(self):
+        if self.request.course_member.is_teacher:
+            return ChapterUnrestrictedSerializer
+
+        return ChapterRestrictedSerializer
 
 
 class AttachmentViewSet(ModelViewSet):
