@@ -43,7 +43,7 @@ class CourseMemberSerializer(serializers.ModelSerializer):
                 return status[1]
 
 
-class PostSerializer(NormalizedModelSerializer):
+class BasePostSerializer(NormalizedModelSerializer):
 
     # TODO: check if is_planned property is included
     class Meta:
@@ -52,22 +52,63 @@ class PostSerializer(NormalizedModelSerializer):
         normalize_for_field = {'title': Normalizer.first_capital}
 
 
-class MaterialSerializer(PostSerializer):
-    class Meta:
+class MaterialSerializer(BasePostSerializer):
+    class Meta(BasePostSerializer.Meta):
         model = Material
 
 
-class TaskSerializer(PostSerializer):
+class MaterialNestedSerializer(serializers.HyperlinkedModelSerializer):
+    detail_url = CourseRelatedHyperlinkedIdentityField(view_name='material-detail', read_only=True)
+
     class Meta:
+        fields = ['id', 'title', 'published_at', 'detail_url', 'is_archived', 'is_planned']
+        model = Material
+
+
+class MaterialRestrictedNestedSerializer(RestrictedNestedPostSerializerMixin, MaterialNestedSerializer):
+    class Meta(MaterialNestedSerializer.Meta):
+        pass
+
+
+class TaskSerializer(BasePostSerializer):
+    class Meta(BasePostSerializer.Meta):
         model = Task
 
 
-class ChapterSerializer(WriteOnCreationMixin, NormalizedModelSerializer):
+class TaskNestedSerializer(serializers.HyperlinkedModelSerializer):
+    detail_url = CourseRelatedHyperlinkedIdentityField(view_name='task-detail', read_only=True)
+
+    class Meta:
+        fields = ['id', 'title', 'published_at', 'deadline', 'detail_url', 'is_archived', 'is_planned', 'deadline_passed']
+        model = Task
+
+
+class TaskRestrictedNestedSerializer(RestrictedNestedPostSerializerMixin, TaskNestedSerializer):
+    class Meta(TaskNestedSerializer.Meta):
+        pass
+
+
+class ChapterSerializer(NormalizedModelSerializer):
     class Meta:
         model = Chapter
-        fields = '__all__'
-        create_only_fields = ['course']
+        fields = ['id', 'title', 'description', 'created_at']
         normalize_for_field = {'title': Normalizer.first_capital}
+
+
+class ChapterRestrictedSerializer(ChapterSerializer):
+    task_set = TaskRestrictedNestedSerializer(read_only=True, many=True)
+    material_set = MaterialRestrictedNestedSerializer(read_only=True, many=True)
+
+    class Meta(ChapterSerializer.Meta):
+        fields = ChapterSerializer.Meta.fields + ['task_set', 'material_set']
+
+
+class ChapterUnrestrictedSerializer(ChapterSerializer):
+    task_set = TaskNestedSerializer(read_only=True, many=True)
+    material_set = MaterialNestedSerializer(read_only=True, many=True)
+
+    class Meta(ChapterSerializer.Meta):
+        fields = ChapterSerializer.Meta.fields + ['task_set', 'material_set']
 
 
 class AttachmentSerializer(serializers.ModelSerializer):
