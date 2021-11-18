@@ -4,6 +4,19 @@ from rest_framework import serializers
 from utils.serializers import NormalizedModelSerializer, WriteOnCreationMixin
 from utils.normalizers import Normalizer
 from user_accounts.serializers import UserAccountPublicSerializer
+from .serializer_fields import CourseRelatedHyperlinkedIdentityField
+
+
+class RestrictedNestedPostSerializerMixin:
+    # TODO: make this a mixin with a generic filtering by using filter methods
+    """
+    This mixin restricts from serialization Posts, that whether are planned or archived. (Suitable for serializing post
+    list, when request came from student, that is not allowed to view planned or archived posts).
+    """
+
+    def to_representation(self, instance):
+        if not instance.is_archived and not instance.is_planned:
+            return super().to_representation(instance)
 
 
 class CourseSerializer(NormalizedModelSerializer):
