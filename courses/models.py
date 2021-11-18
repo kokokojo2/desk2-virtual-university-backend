@@ -1,9 +1,9 @@
 from django.db import models
 from django.core.validators import MinLengthValidator
 from django.conf import settings
-from datetime import datetime
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.utils import timezone
 
 from user_accounts.models import UserAccount
 from university_structures.models import Department, Speciality
@@ -91,7 +91,7 @@ class Post(models.Model):
 
     @property
     def is_planned(self):
-        return self.published_at > datetime.now()
+        return self.published_at > timezone.now()
 
 
 class Material(Post):
