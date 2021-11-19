@@ -1,7 +1,8 @@
+from os import path
 from django.db import models
 from django.core.validators import MinLengthValidator
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 
@@ -78,6 +79,21 @@ class Chapter(models.Model):
         return self.title
 
 
+class Attachment(models.Model):
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey()
+
+    file = models.FileField(upload_to='attachments/')
+
+    def __str__(self):
+        return self.file.name
+
+    @property
+    def file_name(self):
+        return path.basename(self.file.name)
+
+
 class Post(models.Model):
     title = models.CharField(max_length=128, validators=[MinLengthValidator(4), get_regex_validator('title')])
     body = models.TextField()
@@ -112,17 +128,6 @@ class Task(Post):
 
     def __str__(self):
         return self.title
-
-
-class Attachment(models.Model):
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey()
-
-    file = models.FileField(upload_to='attachments/')
-
-    def __str__(self):
-        return self.file.name
 
 
 class StudentWork(models.Model):
