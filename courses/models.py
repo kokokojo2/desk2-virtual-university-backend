@@ -105,6 +105,7 @@ class Post(models.Model):
 
     chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE)
     author = models.ForeignKey(CourseMember, on_delete=models.CASCADE)
+    attachment_set = GenericRelation(Attachment)
 
     class Meta:
         abstract = True
@@ -146,6 +147,8 @@ class StudentWork(models.Model):
     status = models.CharField(max_length=1, choices=STATUSES, default=ASSIGNED)
     answer = models.TextField(blank=True)
     submitted_at = models.DateTimeField(null=True)
+
+    attachment_set = GenericRelation(Attachment)
 
 
 class Grade(models.Model):
