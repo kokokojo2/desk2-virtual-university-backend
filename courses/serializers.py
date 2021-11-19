@@ -1,22 +1,10 @@
 from courses.models import Course, CourseMember, Material, Task, Grade, Chapter, Attachment, StudentWork
 from rest_framework import serializers
 
-from utils.serializers import NormalizedModelSerializer, WriteOnCreationMixin
+from utils.serializers import NormalizedModelSerializer
 from utils.normalizers import Normalizer
 from user_accounts.serializers import UserAccountPublicSerializer
 from .serializer_fields import CourseRelatedHyperlinkedIdentityField
-
-
-class RestrictedNestedPostSerializerMixin:
-    # TODO: make this a mixin with a generic filtering by using filter methods
-    """
-    This mixin restricts from serialization Posts, that whether are planned or archived. (Suitable for serializing post
-    list, when request came from student, that is not allowed to view planned or archived posts).
-    """
-
-    def to_representation(self, instance):
-        if not instance.is_archived and not instance.is_planned:
-            return super().to_representation(instance)
 
 
 class CourseSerializer(NormalizedModelSerializer):
@@ -65,11 +53,6 @@ class MaterialNestedSerializer(serializers.HyperlinkedModelSerializer):
         model = Material
 
 
-class MaterialRestrictedNestedSerializer(RestrictedNestedPostSerializerMixin, MaterialNestedSerializer):
-    class Meta(MaterialNestedSerializer.Meta):
-        pass
-
-
 class TaskSerializer(BasePostSerializer):
     class Meta(BasePostSerializer.Meta):
         model = Task
@@ -83,32 +66,14 @@ class TaskNestedSerializer(serializers.HyperlinkedModelSerializer):
         model = Task
 
 
-class TaskRestrictedNestedSerializer(RestrictedNestedPostSerializerMixin, TaskNestedSerializer):
-    class Meta(TaskNestedSerializer.Meta):
-        pass
-
-
 class ChapterSerializer(NormalizedModelSerializer):
-    class Meta:
-        model = Chapter
-        fields = ['id', 'title', 'description', 'created_at']
-        normalize_for_field = {'title': Normalizer.first_capital}
-
-
-class ChapterRestrictedSerializer(ChapterSerializer):
-    task_set = TaskRestrictedNestedSerializer(read_only=True, many=True)
-    material_set = MaterialRestrictedNestedSerializer(read_only=True, many=True)
-
-    class Meta(ChapterSerializer.Meta):
-        fields = ChapterSerializer.Meta.fields + ['task_set', 'material_set']
-
-
-class ChapterUnrestrictedSerializer(ChapterSerializer):
     task_set = TaskNestedSerializer(read_only=True, many=True)
     material_set = MaterialNestedSerializer(read_only=True, many=True)
 
-    class Meta(ChapterSerializer.Meta):
-        fields = ChapterSerializer.Meta.fields + ['task_set', 'material_set']
+    class Meta:
+        model = Chapter
+        fields = ['id', 'title', 'description', 'created_at', 'task_set', 'material_set']
+        normalize_for_field = {'title': Normalizer.first_capital}
 
 
 class AttachmentSerializer(serializers.ModelSerializer):
