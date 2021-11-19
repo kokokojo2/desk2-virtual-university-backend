@@ -119,7 +119,7 @@ class Attachment(models.Model):
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey()
 
-    file = models.FileField(upload_to='uploads/')
+    file = models.FileField(upload_to='attachments/')
 
     def __str__(self):
         return self.file.name
