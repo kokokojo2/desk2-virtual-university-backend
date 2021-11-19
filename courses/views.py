@@ -57,11 +57,24 @@ class CourseMemberViewSet(mixins.CreateModelMixin,
 
 
 class MaterialViewSet(ModelViewSet):
+
+    class IsTeacherOrReadOnly(BaseIsTeacherOrAllowMethods):
+        allow_methods = SAFE_METHODS
+
+    class IsOwnerOrAllowCreate(BaseIsOwnerOrAllowMethods):
+        owner_field = 'author'
+        allow_methods = SAFE_METHODS + ('POST', )
+
+    permission_classes = [IsAuthenticated, IsTeacherOrReadOnly, IsOwnerOrAllowCreate]
     queryset = Material.objects.all()
     serializer_class = MaterialSerializer
 
     def get_queryset(self):
-        return self.queryset.filter(chapter__in=self.request.course.chapter_set.all())
+        queryset = self.queryset.filter(chapter__in=self.request.course.chapter_set.all()).select_related('chapter')
+        if not self.request.course_member.is_teacher:
+            return queryset.filter(is_archived=False, published_at__lte=timezone.now())
+
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.course_member)
