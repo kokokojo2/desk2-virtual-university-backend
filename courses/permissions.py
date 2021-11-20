@@ -1,5 +1,4 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
-from itertools import chain
 
 from user_accounts.models import TeacherProfile
 from courses.models import CourseMember
@@ -8,6 +7,7 @@ from courses.models import CourseMember
 class BaseIsOwnerOrAllowMethods(BasePermission):
     """Inherit from this class and specify the below fields to create a concrete IsOwner permission."""
     owner_field = ''
+    course_member = False
     allow_methods = ()
     message = 'You are not the owner of this object.'
 
@@ -18,6 +18,9 @@ class BaseIsOwnerOrAllowMethods(BasePermission):
 
         owner = getattr(obj, self.owner_field, None)
         if owner:
+            if self.course_member:
+                return owner.user == request.user
+
             return owner == request.user
 
         raise AttributeError('The specified owner field does not exist on a given model.')
