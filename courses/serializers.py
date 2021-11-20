@@ -48,10 +48,13 @@ class AttachmentNestedSerializer(serializers.ModelSerializer):
 
 
 class BasePostSerializer(NormalizedModelSerializer):
+    author = CourseMemberSerializer(read_only=True)
+    attachment_set = AttachmentNestedSerializer(many=True)
 
     # TODO: check if is_planned property is included
     class Meta:
-        fields = '__all__'
+        fields = ['id', 'title', 'body', 'created_at', 'edited_at', 'published_at', 'is_archived',
+                  'is_planned', 'chapter', 'author', 'attachment_set']
         read_only_fields = ['author']
         normalize_for_field = {'title': Normalizer.first_capital}
 
