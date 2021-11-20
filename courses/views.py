@@ -71,7 +71,7 @@ class MaterialViewSet(ModelViewSet):
     serializer_class = MaterialSerializer
 
     def get_queryset(self):
-        queryset = self.queryset.filter(chapter__in=self.request.course.chapter_set.all()).\
+        queryset = self.queryset.filter(chapter=self.request.chapter).\
             select_related('chapter').select_related('author')
 
         if not self.request.course_member.is_teacher:
