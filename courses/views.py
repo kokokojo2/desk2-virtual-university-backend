@@ -80,7 +80,7 @@ class MaterialViewSet(ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.course_member)
+        serializer.save(author=self.request.course_member, chapter=self.request.chapter)
 
 
 class TaskViewSet(ModelViewSet):
