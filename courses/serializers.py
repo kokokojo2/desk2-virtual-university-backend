@@ -55,7 +55,7 @@ class BasePostSerializer(NormalizedModelSerializer):
         fields = ['id', 'title', 'body', 'created_at', 'edited_at', 'published_at', 'is_archived',
                   'is_planned', 'chapter', 'author', 'attachment_set']
 
-        read_only_fields = ['author']
+        read_only_fields = ['author', 'chapter']
         normalize_for_field = {'title': Normalizer.first_capital}
 
 
