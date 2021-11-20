@@ -63,6 +63,7 @@ class MaterialViewSet(ModelViewSet):
 
     class IsOwnerOrAllowCreate(BaseIsOwnerOrAllowMethods):
         owner_field = 'author'
+        course_member = True
         allow_methods = SAFE_METHODS + ('POST', )
 
     permission_classes = [IsAuthenticated, IsTeacherOrReadOnly, IsOwnerOrAllowCreate]
