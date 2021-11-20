@@ -4,7 +4,7 @@ from rest_framework import serializers
 from utils.serializers import NormalizedModelSerializer
 from utils.normalizers import Normalizer
 from user_accounts.serializers import UserAccountPublicSerializer
-from .serializer_fields import CourseRelatedHyperlinkedIdentityField
+from .serializer_fields import CourseRelatedHyperlinkedIdentityField, ChapterRelatedHyperlinkedIdentityField
 
 
 class CourseSerializer(NormalizedModelSerializer):
@@ -65,7 +65,7 @@ class MaterialSerializer(BasePostSerializer):
 
 
 class MaterialNestedSerializer(serializers.HyperlinkedModelSerializer):
-    detail_url = CourseRelatedHyperlinkedIdentityField(view_name='material-detail', read_only=True)
+    detail_url = ChapterRelatedHyperlinkedIdentityField(view_name='material-detail', read_only=True)
 
     class Meta:
         fields = ['id', 'title', 'published_at', 'detail_url', 'is_archived', 'is_planned']
@@ -78,7 +78,7 @@ class TaskSerializer(BasePostSerializer):
 
 
 class TaskNestedSerializer(serializers.HyperlinkedModelSerializer):
-    detail_url = CourseRelatedHyperlinkedIdentityField(view_name='task-detail', read_only=True)
+    detail_url = ChapterRelatedHyperlinkedIdentityField(view_name='task-detail', read_only=True)
 
     class Meta:
         fields = ['id', 'title', 'published_at', 'deadline', 'detail_url', 'is_archived', 'is_planned', 'deadline_passed']
