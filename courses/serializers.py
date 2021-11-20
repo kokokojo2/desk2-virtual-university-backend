@@ -31,6 +31,22 @@ class CourseMemberSerializer(serializers.ModelSerializer):
                 return status[1]
 
 
+class ChapterNestedSerializer(serializers.HyperlinkedModelSerializer):
+    detail_url = CourseRelatedHyperlinkedIdentityField(view_name='chapter-detail', read_only=True)
+
+    class Meta:
+        model = Chapter
+        fields = ['id', 'title', 'detail_url']
+
+
+class AttachmentNestedSerializer(serializers.ModelSerializer):
+    detail_url = CourseRelatedHyperlinkedIdentityField(view_name='attachment-detail', read_only=True)
+
+    class Meta:
+        model = Attachment
+        fields = ['id', 'file', 'detail_url', 'file_name']
+
+
 class BasePostSerializer(NormalizedModelSerializer):
 
     # TODO: check if is_planned property is included
