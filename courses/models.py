@@ -41,6 +41,12 @@ class Course(models.Model):
         except CourseMember.DoesNotExist:
             return None
 
+    def get_chapter_if_exists(self, chapter_id):
+        try:
+            return self.chapter_set.get(pk=chapter_id)
+        except Chapter.DoesNotExist:
+            return None
+
 
 class CourseMember(models.Model):
     class Meta:
