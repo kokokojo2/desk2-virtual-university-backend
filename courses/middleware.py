@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import resolve
-from rest_framework.status import HTTP_403_FORBIDDEN
+from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import Course
@@ -41,6 +41,16 @@ class CourseMiddleware:
 
             setattr(request, 'course', course)
             setattr(request, 'course_member', course_member)
+
+            if 'chapter_id' in kwargs.keys():
+                chapter = course.get_chapter_if_exists(kwargs['chapter_id'])
+                if not chapter:
+                    return JsonResponse(
+                        {'detail': f'This course does not have chapter with id {kwargs["chapter_id"]}.'},
+                        status=HTTP_404_NOT_FOUND
+                    )
+
+                setattr(request, 'chapter', chapter)
 
         response = self.get_response(request)
 
