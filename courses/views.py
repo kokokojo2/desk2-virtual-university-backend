@@ -83,12 +83,9 @@ class MaterialViewSet(ModelViewSet):
         serializer.save(author=self.request.course_member, chapter=self.request.chapter)
 
 
-class TaskViewSet(ModelViewSet):
+class TaskViewSet(MaterialViewSet):
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.course_member)
 
 
 class GradeViewSet(ModelViewSet):
