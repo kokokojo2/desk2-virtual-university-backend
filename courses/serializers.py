@@ -75,6 +75,7 @@ class MaterialNestedSerializer(serializers.HyperlinkedModelSerializer):
 class TaskSerializer(BasePostSerializer):
     class Meta(BasePostSerializer.Meta):
         model = Task
+        fields = BasePostSerializer.Meta.fields + ['deadline', 'max_grade', 'deadline_passed']
 
 
 class TaskNestedSerializer(serializers.HyperlinkedModelSerializer):
