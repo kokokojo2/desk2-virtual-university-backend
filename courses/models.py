@@ -138,6 +138,9 @@ class Task(Post):
 
 
 class StudentWork(models.Model):
+    class Meta:
+        unique_together = ('task', 'owner')
+
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     owner = models.ForeignKey(CourseMember, on_delete=models.CASCADE)
 
