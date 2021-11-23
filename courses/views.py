@@ -154,3 +154,18 @@ class StudentWorkViewSet(mixins.CreateModelMixin,
         status = serializer.validated_data.get('status', None)
         submitted_at = timezone.now() if status and status == StudentWork.SUBMITTED else None
         serializer.save(submitted_at=submitted_at)
+
+    def get_permissions(self):
+        permission_classes = [IsAuthenticated]
+
+        if self.action == 'list':
+            permission_classes += [IsTeacher | IsStudent]
+
+        if self.action == 'create':
+            permission_classes += [IsStudent, IsActiveTask]
+
+        if self.action == 'update' or self.action == 'destroy':
+            permission_classes += [self.IsOwner, IsEditableStudentWork]
+
+        return [permission() for permission in permission_classes]
+
