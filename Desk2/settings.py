@@ -11,7 +11,7 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = []
-
+    
 
 # Application definition
 
@@ -24,7 +24,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
-
+    'corsheaders',
     'user_accounts',
     'university_structures',
     'courses',
@@ -38,6 +38,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'Desk2.urls'
@@ -145,3 +146,7 @@ TWO_FA_TOKEN_LENGTH = 7
 PASSWORD_RESET_TOKEN_TIMEOUT = 5 * 60
 EMAIL_CONFIRM_TOKEN_TIMEOUT = 5 * 60
 TWO_FA_TOKEN_TIMEOUT = 5 * 60
+
+CORS_ORIGIN_WHITELIST = [
+     'http://localhost:3000'
+]
