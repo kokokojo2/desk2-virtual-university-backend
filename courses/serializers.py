@@ -110,7 +110,7 @@ class StudentWorkSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentWork
         fields = '__all__'
-        read_only_fields = ['owner', 'submitted_at', 'task']
+        read_only_fields = ['owner', 'submitted_at', 'task', 'status']
 
 
 class GradeSerializer(serializers.ModelSerializer):
