@@ -2,6 +2,7 @@ from django.db.models import Prefetch
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 from rest_framework import mixins
+from rest_framework.decorators import action
 from django.utils import timezone
 
 from courses.models import Course, CourseMember, Task, Grade, Chapter, Attachment, StudentWork, Material
@@ -9,7 +10,7 @@ from courses.serializers import CourseSerializer, GradeSerializer, TaskSerialize
     ChapterSerializer, CourseMemberSerializer, StudentWorkSerializer,\
     MaterialSerializer
 from .permissions import IsGlobalTeacherOrReadOnly, BaseIsOwnerOrAllowMethods,\
-    BaseIsTeacherOrAllowMethods
+    BaseIsTeacherOrAllowMethods, IsTeacher, IsStudent, IsActiveTask, IsEditableStudentWork
 
 
 class CourseViewSet(ModelViewSet):
@@ -130,9 +131,13 @@ class AttachmentViewSet(ModelViewSet):
 class StudentWorkViewSet(ModelViewSet):
     queryset = StudentWork.objects.all()
     serializer_class = StudentWorkSerializer
+    db_exception_msg = 'You have already created the StudentWork object for this task.'
 
     def get_queryset(self):
-        return self.queryset.filter(task=self.request.task)
+        queryset = self.queryset.filter(task=self.request.task)
+        if not self.request.course_member.is_teacher:
+            return queryset.filter(owner=self.request.course_member)
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.course_member, task=self.request.task)
