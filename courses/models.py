@@ -151,7 +151,7 @@ class StudentWork(models.Model):
     owner = models.ForeignKey(CourseMember, on_delete=models.CASCADE)
 
     ASSIGNED = 'A'
-    SUBMITTED = 'B'
+    SUBMITTED = 'S'
     GRADED = 'G'
 
     STATUSES = (
