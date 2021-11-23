@@ -165,6 +165,10 @@ class StudentWork(models.Model):
 
     attachment_set = GenericRelation(Attachment)
 
+    @property
+    def is_graded(self):
+        return self.status == self.GRADED
+
 
 class Grade(models.Model):
     description = models.CharField(max_length=128, blank=True, validators=[get_regex_validator('description')])
