@@ -52,6 +52,16 @@ class CourseMiddleware:
 
                 setattr(request, 'chapter', chapter)
 
+                if 'task_id' in kwargs.keys():
+                    task = chapter.get_task_if_exists(kwargs['task_id'])
+                    if not task:
+                        return JsonResponse(
+                            {'detail': f'This course does not have a task with id {kwargs["task_id"]}.'},
+                            status=HTTP_404_NOT_FOUND
+                        )
+
+                    setattr(request, 'task', task)
+
         response = self.get_response(request)
 
         return response
