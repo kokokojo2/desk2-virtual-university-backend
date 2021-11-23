@@ -130,3 +130,14 @@ class AttachmentViewSet(ModelViewSet):
 class StudentWorkViewSet(ModelViewSet):
     queryset = StudentWork.objects.all()
     serializer_class = StudentWorkSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(task=self.request.task)
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.course_member, task=self.request.task)
+
+    def perform_update(self, serializer):
+        status = serializer.validated_data.get('status', None)
+        submitted_at = timezone.now() if status and status == StudentWork.SUBMITTED else None
+        serializer.save(submitted_at=submitted_at)
