@@ -104,11 +104,19 @@ class AttachmentSerializer(serializers.ModelSerializer):
 
 
 class StudentWorkSerializer(serializers.ModelSerializer):
+    owner = CourseMemberSerializer(read_only=True)
+    attachment_set = AttachmentNestedSerializer(read_only=True, many=True)
+    status = serializers.SerializerMethodField()
+
     class Meta:
         model = StudentWork
         fields = '__all__'
-        read_only_fields = ['owner']
-        create_only_fields = ['task']
+        read_only_fields = ['owner', 'submitted_at', 'task']
+
+    def get_status(self, obj):
+        for status in obj.STATUSES:
+            if status[0] == obj.status:
+                return status[1]
 
 
 class GradeSerializer(serializers.ModelSerializer):
