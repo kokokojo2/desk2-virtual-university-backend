@@ -118,3 +118,6 @@ GitHub.sublime-settings
 
 # redis
 *.rdb
+
+# local db
+local_tests_db
