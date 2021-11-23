@@ -128,7 +128,15 @@ class AttachmentViewSet(ModelViewSet):
     serializer_class = AttachmentSerializer
 
 
-class StudentWorkViewSet(ModelViewSet):
+class StudentWorkViewSet(mixins.CreateModelMixin,
+                         mixins.ListModelMixin,
+                         mixins.DestroyModelMixin,
+                         mixins.UpdateModelMixin,
+                         GenericViewSet):
+    class IsOwner(BaseIsOwnerOrAllowMethods):
+        owner_field = 'owner'
+        course_member = True
+
     queryset = StudentWork.objects.all()
     serializer_class = StudentWorkSerializer
     db_exception_msg = 'You have already created the StudentWork object for this task.'
