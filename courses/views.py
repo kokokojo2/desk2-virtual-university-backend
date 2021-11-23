@@ -1,7 +1,9 @@
 from django.db.models import Prefetch
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 from rest_framework import mixins
+from rest_framework import status
 from rest_framework.decorators import action
 from django.utils import timezone
 
@@ -150,11 +152,6 @@ class StudentWorkViewSet(mixins.CreateModelMixin,
     def perform_create(self, serializer):
         serializer.save(owner=self.request.course_member, task=self.request.task)
 
-    def perform_update(self, serializer):
-        status = serializer.validated_data.get('status', None)
-        submitted_at = timezone.now() if status and status == StudentWork.SUBMITTED else None
-        serializer.save(submitted_at=submitted_at)
-
     def get_permissions(self):
         permission_classes = [IsAuthenticated]
 
@@ -165,7 +162,33 @@ class StudentWorkViewSet(mixins.CreateModelMixin,
             permission_classes += [IsStudent, IsActiveTask]
 
         if self.action == 'update' or self.action == 'destroy':
-            permission_classes += [self.IsOwner, IsEditableStudentWork]
+            permission_classes += [self.IsOwner, IsEditableStudentWork, IsActiveTask]
+
+        if self.action == 'submit' or self.action == 'unsubmit':
+            permission_classes += [self.IsOwner, IsActiveTask]
 
         return [permission() for permission in permission_classes]
 
+    @action(methods=['POST'], detail=True)
+    def submit(self, request, pk=None, course_id=None, chapter_id=None, task_id=None):
+        instance = self.get_object()
+        if not instance.is_graded:
+            instance.status = instance.SUBMITTED
+            instance.submitted_at = timezone.now()
+
+            instance.save()
+            return Response(self.serializer_class(instance).data, status=status.HTTP_200_OK)
+
+        return Response({'detail': 'This work is already graded.'}, status=status.HTTP_403_FORBIDDEN)
+
+    @action(methods=['POST'], detail=True)
+    def unsubmit(self, request, pk=None, course_id=None, chapter_id=None, task_id=None):
+        instance = self.get_object()
+        if not instance.is_graded:
+            instance.status = instance.ASSIGNED
+            instance.submitted_at = None
+
+            instance.save()
+            return Response(self.serializer_class(instance).data, status=status.HTTP_200_OK)
+
+        return Response({'detail': 'This work is already graded.'}, status=status.HTTP_403_FORBIDDEN)
