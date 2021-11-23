@@ -49,15 +49,27 @@ class IsTeacher(BasePermission):
     """
     This permission should only be used on a course detail views.
     """
-    message = 'You are not a teacher.'
+    message = 'You are not a teacher in this course.'
 
     def has_permission(self, request, view):
-        print('is teacher', request.course_member.role == CourseMember.TEACHER)
         return request.course_member.role == CourseMember.TEACHER
 
     def has_object_permission(self, request, view, obj):
         # needs to be defined in order to use correctly bitwise operators on a permission classes
         # https://github.com/encode/django-rest-framework/issues/7117
+        return self.has_permission(request, view)
+
+
+class IsStudent(BasePermission):
+    """
+    This permission should only be used on a course detail views.
+    """
+    message = 'You are not a student in this course.'
+
+    def has_permission(self, request, view):
+        return request.course_member.role == CourseMember.STUDENT
+
+    def has_object_permission(self, request, view, obj):
         return self.has_permission(request, view)
 
 
@@ -69,3 +81,16 @@ class BaseIsTeacherOrAllowMethods(IsTeacher):
             return True
 
         return super().has_permission(request, view)
+
+
+class IsActiveTask(BasePermission):
+    """Should be used only with task-detailed views."""
+    def has_permission(self, request, view):
+        return not request.task.is_planned and not request.task.is_archived
+
+
+class IsEditableStudentWork(BasePermission):
+    message = 'This StudentWork is submitted or graded and therefore cannot be editable.'
+
+    def has_object_permission(self, request, view, obj):
+        return obj.status == obj.ASSIGNED
