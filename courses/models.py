@@ -84,6 +84,12 @@ class Chapter(models.Model):
     def __str__(self):
         return self.title
 
+    def get_task_if_exists(self, task_id):
+        try:
+            return self.task_set.get(pk=task_id)
+        except Task.DoesNotExist:
+            return None
+
 
 class Attachment(models.Model):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
