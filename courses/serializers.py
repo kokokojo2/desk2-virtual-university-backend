@@ -42,7 +42,14 @@ class ChapterNestedSerializer(serializers.HyperlinkedModelSerializer):
 class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
-        fields = ['id', 'file', 'detail_url', 'file_name']
+        fields = ['id', 'file', 'file_name']
+
+    def check_and_save(self, pk, content_type_obj):
+        if self.is_valid():
+            self.save(object_id=pk, content_type=content_type_obj)
+            return True
+
+        return False
 
 
 class BasePostSerializer(NormalizedModelSerializer):
