@@ -119,4 +119,14 @@ class GradeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Grade
         fields = '__all__'
-        read_only_fields = ['grader']
+
+    def validate(self, attrs):
+        if not attrs['work'].is_submitted:
+            # teacher shouldn`t know that work exists if it has not been yet submitted due to ethical reasons.
+            raise serializers.ValidationError('This work is already graded or do not exist.')
+
+        task_instance = StudentWork.objects.get(pk=attrs['work'].pk).task
+        if attrs['amount'] > task_instance.max_grade:
+            raise serializers.ValidationError('The amount exceeds the maximum grade for this task.')
+
+        return attrs
