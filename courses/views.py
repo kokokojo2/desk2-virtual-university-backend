@@ -1,4 +1,5 @@
 from django.db.models import Prefetch
+from django.contrib.contenttypes.models import ContentType
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
@@ -9,10 +10,9 @@ from django.utils import timezone
 
 from courses.models import Course, CourseMember, Task, Grade, Chapter, Attachment, StudentWork, Material
 from courses.serializers import CourseSerializer, GradeSerializer, TaskSerializer, AttachmentSerializer, \
-    ChapterSerializer, CourseMemberSerializer, StudentWorkSerializer,\
-    MaterialSerializer
-from .permissions import IsGlobalTeacherOrReadOnly, BaseIsOwnerOrAllowMethods,\
-    BaseIsTeacherOrAllowMethods, IsTeacher, IsStudent, IsActiveTask, IsEditableStudentWork
+    ChapterSerializer, CourseMemberSerializer, StudentWorkSerializer, MaterialSerializer
+from .permissions import IsGlobalTeacherOrReadOnly, BaseIsOwnerOrAllowMethods, BaseIsTeacherOrAllowMethods, IsTeacher,\
+    IsStudent, IsActiveTask, IsEditableStudentWork
 
 
 class CourseViewSet(ModelViewSet):
