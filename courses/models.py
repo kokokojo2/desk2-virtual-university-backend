@@ -172,8 +172,8 @@ class StudentWork(models.Model):
 
 class Grade(models.Model):
     description = models.CharField(max_length=128, blank=True, validators=[get_regex_validator('description')])
-    amount = models.PositiveSmallIntegerField()  # TODO: implement max grade validation on serializer level
+    amount = models.PositiveSmallIntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
 
-    work = models.ForeignKey(StudentWork, on_delete=models.CASCADE)
+    work = models.OneToOneField(StudentWork, on_delete=models.CASCADE)
     grader = models.ForeignKey(CourseMember, on_delete=models.SET_NULL, null=True)
