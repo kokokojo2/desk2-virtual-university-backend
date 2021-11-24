@@ -163,7 +163,7 @@ class StudentWorkViewSet(mixins.CreateModelMixin,
         if self.action == 'create':
             permission_classes += [IsStudent, IsActiveTask]
 
-        if self.action == 'update' or self.action == 'destroy':
+        if self.action == 'update' or self.action == 'destroy' or self.action == 'partial_update':
             permission_classes += [self.IsOwner, IsEditableStudentWork, IsActiveTask]
 
         if self.action == 'submit' or self.action == 'unsubmit':
