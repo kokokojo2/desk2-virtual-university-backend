@@ -103,16 +103,6 @@ class AttachmentSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class StudentWorkSerializer(serializers.ModelSerializer):
-    owner = CourseMemberSerializer(read_only=True)
-    attachment_set = AttachmentNestedSerializer(read_only=True, many=True)
-
-    class Meta:
-        model = StudentWork
-        fields = '__all__'
-        read_only_fields = ['owner', 'submitted_at', 'task', 'status']
-
-
 class GradeSerializer(serializers.ModelSerializer):
     grader = CourseMemberSerializer(read_only=True)
 
@@ -130,3 +120,14 @@ class GradeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('The amount exceeds the maximum grade for this task.')
 
         return attrs
+
+
+class StudentWorkSerializer(serializers.ModelSerializer):
+    owner = CourseMemberSerializer(read_only=True)
+    attachment_set = AttachmentNestedSerializer(read_only=True, many=True)
+    grade = GradeSerializer(read_only=True)
+
+    class Meta:
+        model = StudentWork
+        fields = '__all__'
+        read_only_fields = ['owner', 'submitted_at', 'task', 'status']
