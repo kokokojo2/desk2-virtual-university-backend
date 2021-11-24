@@ -107,6 +107,36 @@ class GradeViewSet(mixins.CreateModelMixin,
     queryset = Grade.objects.all()
     serializer_class = GradeSerializer
 
+    def get_queryset(self):
+        if not self.request.course_member.is_teacher:
+            return self.queryset.filter(work__owner=self.request.course_member)
+
+        # if this code is reached, the course_member is a teacher
+        queryset = self.queryset.filter(grader__course=self.request.course)
+
+        # from get query params
+        student_id = self.request.GET.get('student-id', False)
+        task_id = self.request.GET.get('task-id', False)
+
+        if student_id:
+            queryset = queryset.filter(work__owner__id=student_id)
+        if task_id:
+            queryset = queryset.filter(work__task__id=task_id)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        instance = serializer.save(grader=self.request.course_member)
+        student_work = instance.work
+        student_work.status = student_work.GRADED
+        student_work.save()
+
+    def perform_destroy(self, instance):
+        student_work = instance.work
+        student_work.status = student_work.SUBMITTED
+        student_work.save()
+        instance.delete()
+
 
 class ChapterViewSet(ModelViewSet):
     class IsTeacherOrReadOnly(BaseIsTeacherOrAllowMethods):
