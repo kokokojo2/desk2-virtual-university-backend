@@ -114,6 +114,8 @@ class StudentWorkSerializer(serializers.ModelSerializer):
 
 
 class GradeSerializer(serializers.ModelSerializer):
+    grader = CourseMemberSerializer(read_only=True)
+
     class Meta:
         model = Grade
         fields = '__all__'
