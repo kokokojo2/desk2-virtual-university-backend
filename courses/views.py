@@ -147,7 +147,9 @@ class StudentWorkViewSet(mixins.CreateModelMixin,
         queryset = self.queryset.filter(task=self.request.task)
         if not self.request.course_member.is_teacher:
             return queryset.filter(owner=self.request.course_member)
-        return queryset
+
+        # teacher cannot view the works that have not been yet submitted.
+        return queryset.filter(status__in=(StudentWork.GRADED, StudentWork.SUBMITTED))
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.course_member, task=self.request.task)
