@@ -59,7 +59,37 @@ class CourseMemberViewSet(mixins.CreateModelMixin,
         serializer.save(user=self.request.user, course=self.request.course)
 
 
-class MaterialViewSet(ModelViewSet):
+class AttachmentMixin:
+    """Provides functionality for adding and deleting attachments. Should be used only with ViewSets, which model has
+    genericRelation to the attachment model."""
+    @action(methods=['POST'], detail=True, url_path='attachments')
+    def add_attachment(self, request, **kwargs):
+        pk = kwargs.get('pk', None)
+        target_object = self.get_object()
+        attachment_serializer = AttachmentSerializer(data=request.data)
+
+        if attachment_serializer.check_and_save(pk, ContentType.objects.get_for_model(self.serializer_class.Meta.model)):
+            target_object.save()  # updates Post.edited_at field with current datetime
+            return Response(attachment_serializer.data, status=status.HTTP_200_OK)
+
+        return Response(attachment_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(methods=['DELETE'], detail=True, url_path=r'attachments/(?P<attachment_id>\d+)')
+    def delete_attachment(self, request, **kwargs):
+        attachment_id = kwargs.get('attachment_id', None)
+        target_obj = self.get_object()
+        try:
+            attachment = target_obj.attachment_set.get(pk=attachment_id)
+        except Attachment.DoesNotExist:
+            return Response({'detail': 'Attachment not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        attachment.delete()
+        target_obj.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class MaterialViewSet(ModelViewSet, AttachmentMixin):
 
     class IsTeacherOrReadOnly(BaseIsTeacherOrAllowMethods):
         allow_methods = SAFE_METHODS
