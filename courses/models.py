@@ -169,6 +169,10 @@ class StudentWork(models.Model):
     def is_graded(self):
         return self.status == self.GRADED
 
+    @property
+    def is_submitted(self):
+        return self.status == self.SUBMITTED
+
 
 class Grade(models.Model):
     description = models.CharField(max_length=128, blank=True, validators=[get_regex_validator('description')])
