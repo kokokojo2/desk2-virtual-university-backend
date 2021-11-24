@@ -1,18 +1,22 @@
 from django.db.models import Prefetch
 from django.contrib.contenttypes.models import ContentType
+from django.core.validators import validate_email, ValidationError
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, SAFE_METHODS
 from rest_framework import mixins
 from rest_framework import status
 from rest_framework.decorators import action
-from django.utils import timezone
 
 from courses.models import Course, CourseMember, Task, Grade, Chapter, Attachment, StudentWork, Material
 from courses.serializers import CourseSerializer, GradeSerializer, TaskSerializer, AttachmentSerializer, \
     ChapterSerializer, CourseMemberSerializer, StudentWorkSerializer, MaterialSerializer
 from .permissions import IsGlobalTeacherOrReadOnly, BaseIsOwnerOrAllowMethods, BaseIsTeacherOrAllowMethods, IsTeacher,\
     IsStudent, IsActiveTask, IsEditableStudentWork
+from user_accounts.models import TeacherProfile, UserAccount
 
 
 class CourseViewSet(ModelViewSet):
@@ -57,6 +61,41 @@ class CourseMemberViewSet(mixins.CreateModelMixin,
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user, course=self.request.course)
+
+    @action(methods=['POST'], detail=False, url_path='add-members', permission_classes=[IsTeacher])
+    def add_student(self, request, **kwargs):
+        """Used to add teachers and students to the course by their email address."""
+        email = request.data.get('email', None)
+        member_type = request.data.get('member_type', None)
+        if not email:
+            return Response({'email': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not member_type:
+            return Response({'member_type': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        role = self._get_role(member_type)
+        if not role:
+            return Response({'member_type': 'Invalid member type. Choices: student, teacher.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            validate_email(email)
+        except ValidationError:
+            return Response({'email': 'Please enter a valid email.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = get_object_or_404(UserAccount, email=email)
+        if not isinstance(user.profile, TeacherProfile) and member_type == 'teacher':
+            return Response({'detail': 'Only teacher accounts can be added as teacher to the course.'})
+
+        CourseMember.objects.create(user=user, course=self.request.course, role=role)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def _get_role(self, member_type):
+        if member_type == 'teacher':
+            return CourseMember.TEACHER
+
+        if member_type == 'student':
+            return CourseMember.STUDENT
 
 
 class AttachmentMixin:
