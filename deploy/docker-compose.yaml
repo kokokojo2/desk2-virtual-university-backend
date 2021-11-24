@@ -1,11 +1,13 @@
 version: "3.9"
 services:
-  desk2:
-    build: .
+  desk2-api:
+    image: desk2-api
     ports:
       - "8000:8000"
+      - "6379:6379"
     env_file:
-      - .env
+      - api.env
   redis:
     image: "redis:6.2.6"
-    network_mode: "service:desk2"
+    expose:
+      - "6379"
