@@ -91,7 +91,19 @@ class TaskViewSet(MaterialViewSet):
     serializer_class = TaskSerializer
 
 
-class GradeViewSet(ModelViewSet):
+class GradeViewSet(mixins.CreateModelMixin,
+                   mixins.ListModelMixin,
+                   mixins.DestroyModelMixin,
+                   GenericViewSet):
+    class IsTeacherOrReadOnly(BaseIsTeacherOrAllowMethods):
+        allow_methods = SAFE_METHODS
+
+    class IsOwnerOrAllowCreate(BaseIsOwnerOrAllowMethods):
+        owner_field = 'grader'
+        course_member = True
+        allow_methods = SAFE_METHODS + ('POST', )
+
+    permission_classes = [IsAuthenticated, IsTeacherOrReadOnly, IsOwnerOrAllowCreate]
     queryset = Grade.objects.all()
     serializer_class = GradeSerializer
 
