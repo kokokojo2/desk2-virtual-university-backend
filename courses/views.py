@@ -201,7 +201,8 @@ class StudentWorkViewSet(mixins.CreateModelMixin,
                          mixins.ListModelMixin,
                          mixins.DestroyModelMixin,
                          mixins.UpdateModelMixin,
-                         GenericViewSet):
+                         GenericViewSet,
+                         AttachmentMixin):
     class IsOwner(BaseIsOwnerOrAllowMethods):
         owner_field = 'owner'
         course_member = True
