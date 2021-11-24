@@ -255,7 +255,7 @@ class StudentWorkViewSet(mixins.CreateModelMixin,
         return [permission() for permission in permission_classes]
 
     @action(methods=['POST'], detail=True)
-    def submit(self, request, pk=None, course_id=None, chapter_id=None, task_id=None):
+    def submit(self, request, **kwargs):
         instance = self.get_object()
         if not instance.is_graded:
             instance.status = instance.SUBMITTED
@@ -267,7 +267,7 @@ class StudentWorkViewSet(mixins.CreateModelMixin,
         return Response({'detail': 'This work is already graded.'}, status=status.HTTP_403_FORBIDDEN)
 
     @action(methods=['POST'], detail=True)
-    def unsubmit(self, request, pk=None, course_id=None, chapter_id=None, task_id=None):
+    def unsubmit(self, request, **kwargs):
         instance = self.get_object()
         if not instance.is_graded:
             instance.status = instance.ASSIGNED
