@@ -2,14 +2,13 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from courses.views import CourseViewSet, GradeViewSet, TaskViewSet, ChapterViewSet, CourseMemberViewSet, \
-    AttachmentViewSet, StudentWorkViewSet, MaterialViewSet
+    StudentWorkViewSet, MaterialViewSet
 
 display_per_course_router = DefaultRouter()
 
 display_per_course_router.register('course_members', CourseMemberViewSet)
 display_per_course_router.register('chapters', ChapterViewSet)
 display_per_course_router.register('grades', GradeViewSet)
-display_per_course_router.register('attachments', AttachmentViewSet)
 
 display_per_chapter_router = DefaultRouter()
 

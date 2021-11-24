@@ -167,17 +167,6 @@ class ChapterViewSet(ModelViewSet):
         serializer.save(course=self.request.course)
 
 
-class AttachmentViewSet(mixins.DestroyModelMixin,
-                        mixins.RetrieveModelMixin):
-    queryset = Attachment.objects.all()
-    serializer_class = AttachmentSerializer
-
-    def perform_destroy(self, instance):
-        obj = instance.content_object
-        obj.save()  # updates creating Post.edited_at field with current datetime
-        instance.delete()
-
-
 class StudentWorkViewSet(mixins.CreateModelMixin,
                          mixins.ListModelMixin,
                          mixins.DestroyModelMixin,
