@@ -39,9 +39,7 @@ class ChapterNestedSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['id', 'title', 'detail_url']
 
 
-class AttachmentNestedSerializer(serializers.ModelSerializer):
-    detail_url = CourseRelatedHyperlinkedIdentityField(view_name='attachment-detail', read_only=True)
-
+class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
         fields = ['id', 'file', 'detail_url', 'file_name']
@@ -49,7 +47,7 @@ class AttachmentNestedSerializer(serializers.ModelSerializer):
 
 class BasePostSerializer(NormalizedModelSerializer):
     author = CourseMemberSerializer(read_only=True)
-    attachment_set = AttachmentNestedSerializer(many=True, read_only=True)
+    attachment_set = AttachmentSerializer(many=True, read_only=True)
 
     class Meta:
         fields = ['id', 'title', 'body', 'created_at', 'edited_at', 'published_at', 'is_archived',
@@ -96,13 +94,6 @@ class ChapterSerializer(NormalizedModelSerializer):
         normalize_for_field = {'title': Normalizer.first_capital}
 
 
-class AttachmentSerializer(serializers.ModelSerializer):
-    # TODO: add more user friendly serialization
-    class Meta:
-        model = Attachment
-        fields = '__all__'
-
-
 class GradeSerializer(serializers.ModelSerializer):
     grader = CourseMemberSerializer(read_only=True)
 
@@ -124,7 +115,7 @@ class GradeSerializer(serializers.ModelSerializer):
 
 class StudentWorkSerializer(serializers.ModelSerializer):
     owner = CourseMemberSerializer(read_only=True)
-    attachment_set = AttachmentNestedSerializer(read_only=True, many=True)
+    attachment_set = AttachmentSerializer(read_only=True, many=True)
     grade = GradeSerializer(read_only=True)
 
     class Meta:
