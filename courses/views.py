@@ -99,6 +99,10 @@ class MaterialViewSet(ModelViewSet, AttachmentMixin):
         course_member = True
         allow_methods = SAFE_METHODS + ('POST', )
 
+    class IsOwner(BaseIsOwnerOrAllowMethods):
+        owner_field = 'author'
+        course_member = True
+
     permission_classes = [IsAuthenticated, IsTeacherOrReadOnly, IsOwnerOrAllowCreate]
     queryset = Material.objects.all()
     serializer_class = MaterialSerializer
@@ -114,6 +118,14 @@ class MaterialViewSet(ModelViewSet, AttachmentMixin):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.course_member, chapter=self.request.chapter)
+
+    def get_permissions(self):
+        permission_classes = self.permission_classes
+
+        if self.action == 'add_attachment' or self.action == 'delete_attachment':
+            permission_classes = [IsAuthenticated, self.IsOwner]
+
+        return [permission() for permission in permission_classes]
 
 
 class TaskViewSet(MaterialViewSet):
@@ -236,6 +248,9 @@ class StudentWorkViewSet(mixins.CreateModelMixin,
 
         if self.action == 'submit' or self.action == 'unsubmit':
             permission_classes += [self.IsOwner, IsActiveTask]
+
+        if self.action == 'add_attachment' or self.action == 'delete_attachment':
+            permission_classes = [self.IsOwner, IsEditableStudentWork, IsActiveTask]
 
         return [permission() for permission in permission_classes]
 
