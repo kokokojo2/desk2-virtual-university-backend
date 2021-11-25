@@ -202,33 +202,6 @@ class ChangeEmailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class ConfirmEmailView(APIView):
-    throttle_scope = 'token-check'
-
-    def post(self, request):
-        token_generator = EmailConfirmationTokenGenerator()
-
-        try:
-            user = UserAccount.objects.get(email=request.data['email'])
-            token = request.data['token']
-        except (UserAccount.DoesNotExist, KeyError):
-            user = None
-            token = ''
-
-        if user and token_generator.check_token(user, token, remove_from_storage=True):
-            user.email_confirmed = True
-            user.last_login = datetime.now()
-            user.save()
-
-            tokens = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(tokens),
-                'access': str(tokens.access_token)
-            }, status=status.HTTP_200_OK)
-
-        return Response({'detail': 'Invalid email or token.'}, status=status.HTTP_400_BAD_REQUEST)
-
-
 class CheckTokenView(APIView):
     throttle_scope = 'token-check'
 
