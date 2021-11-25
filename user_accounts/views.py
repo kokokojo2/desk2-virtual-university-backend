@@ -18,7 +18,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .utils import get_serializer_for_profile, get_serializer_for_profile_obj, serializer_check_save
 from .serializers import UserAccountSerializer, PasswordSerializer
 from .models import UserAccount
-from .tokens import check_token, EmailConfirmationTokenGenerator, PasswordChangeTokenGenerator, TwoFATokenGenerator
+from .tokens import check_token, EmailConfirmationTokenGenerator, PasswordChangeTokenGenerator, TwoFATokenGenerator, \
+    EmailConfirmationUnregisteredTokenGenerator
 from .tasks import send_2fa_token
 
 
@@ -42,6 +43,7 @@ class AuthenticationViewSet(ViewSet):
 
         email = request.data.get('email', None)
         password = request.data.get('password', None)
+        token = request.data.get('email-token', None)
 
         if not email:
             return Response({'email': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -49,13 +51,20 @@ class AuthenticationViewSet(ViewSet):
         if not password:
             return Response({'password': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        if not token:
+            return Response({'email-token': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
         if profile_serializer is None:
             return Response(
                 {'profile_type': 'Invalid profile type. Should be student or teacher.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        user_saved, user = serializer_check_save(user_serializer, False, password=password, email=email)
+        if not EmailConfirmationUnregisteredTokenGenerator().check_token(email, token, remove_from_storage=True):
+            return Response({'email-token': 'Given token is invalid. Make sure to check your email.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user_saved, user = serializer_check_save(user_serializer, False, password=password, email=email, email_confirmed=True)
 
         if not user_saved:
             return Response(user, status=status.HTTP_400_BAD_REQUEST)
@@ -218,9 +227,6 @@ class CheckTokenView(APIView):
             email = request.data['email']
         except KeyError:
             return Response({'detail': 'Email or token is not provided.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if token_type == 'email-confirm':
-            token_generator = EmailConfirmationTokenGenerator
 
         if token_type == 'password-reset':
             token_generator = PasswordChangeTokenGenerator
