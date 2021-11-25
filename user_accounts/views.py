@@ -177,14 +177,26 @@ class ChangeEmailView(APIView):
 
     def post(self, request):
         user = request.user
+        token = request.data.get('token', None)
+        email = request.data.get('email', None)
+
+        if not email:
+            return Response({'email': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not token:
+            return Response({'token': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            validate_email(request.data['email'])
-        except (ValidationError, KeyError):
-            return Response({'detail': 'This email address is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
+            validate_email(email)
+        except ValidationError:
+            return Response({'email': 'Given email address is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user.email = request.data['email']
-        user.email_confirmed = False
+        if not EmailConfirmationUnregisteredTokenGenerator().check_token(email, token, remove_from_storage=True):
+            return Response({'token': 'Given token is invalid. Make sure to check your email'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user.email = email
+        user.email_confirmed = True
         user.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
