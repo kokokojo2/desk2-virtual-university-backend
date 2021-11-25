@@ -18,7 +18,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .utils import get_serializer_for_profile, get_serializer_for_profile_obj, serializer_check_save
 from .serializers import UserAccountSerializer, PasswordSerializer
 from .models import UserAccount
-from .tokens import check_token, EmailConfirmationTokenGenerator, PasswordChangeTokenGenerator, TwoFATokenGenerator
+from .tokens import check_token, EmailConfirmationTokenGenerator, PasswordChangeTokenGenerator, TwoFATokenGenerator, \
+    EmailConfirmationUnregisteredTokenGenerator
 from .tasks import send_2fa_token
 
 
@@ -40,18 +41,30 @@ class AuthenticationViewSet(ViewSet):
         user_serializer = UserAccountSerializer(data=request.data)
         profile_serializer = get_serializer_for_profile(request.data)
 
+        email = request.data.get('email', None)
+        password = request.data.get('password', None)
+        token = request.data.get('email-token', None)
+
+        if not email:
+            return Response({'email': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not password:
+            return Response({'password': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not token:
+            return Response({'email-token': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
         if profile_serializer is None:
             return Response(
                 {'profile_type': 'Invalid profile type. Should be student or teacher.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        user_saved, user = serializer_check_save(
-            user_serializer,
-            False,
-            password=request.data['password'],
-            email=request.data['email']
-        )
+        if not EmailConfirmationUnregisteredTokenGenerator().check_token(email, token, remove_from_storage=True):
+            return Response({'email-token': 'Given token is invalid. Make sure to check your email.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user_saved, user = serializer_check_save(user_serializer, False, password=password, email=email, email_confirmed=True)
 
         if not user_saved:
             return Response(user, status=status.HTTP_400_BAD_REQUEST)
@@ -164,44 +177,29 @@ class ChangeEmailView(APIView):
 
     def post(self, request):
         user = request.user
+        token = request.data.get('token', None)
+        email = request.data.get('email', None)
+
+        if not email:
+            return Response({'email': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not token:
+            return Response({'token': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            validate_email(request.data['email'])
-        except (ValidationError, KeyError):
-            return Response({'detail': 'This email address is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
+            validate_email(email)
+        except ValidationError:
+            return Response({'email': 'Given email address is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        user.email = request.data['email']
-        user.email_confirmed = False
+        if not EmailConfirmationUnregisteredTokenGenerator().check_token(email, token, remove_from_storage=True):
+            return Response({'token': 'Given token is invalid. Make sure to check your email'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user.email = email
+        user.email_confirmed = True
         user.save()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class ConfirmEmailView(APIView):
-    throttle_scope = 'token-check'
-
-    def post(self, request):
-        token_generator = EmailConfirmationTokenGenerator()
-
-        try:
-            user = UserAccount.objects.get(email=request.data['email'])
-            token = request.data['token']
-        except (UserAccount.DoesNotExist, KeyError):
-            user = None
-            token = ''
-
-        if user and token_generator.check_token(user, token, remove_from_storage=True):
-            user.email_confirmed = True
-            user.last_login = datetime.now()
-            user.save()
-
-            tokens = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(tokens),
-                'access': str(tokens.access_token)
-            }, status=status.HTTP_200_OK)
-
-        return Response({'detail': 'Invalid email or token.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CheckTokenView(APIView):
@@ -214,9 +212,6 @@ class CheckTokenView(APIView):
             email = request.data['email']
         except KeyError:
             return Response({'detail': 'Email or token is not provided.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if token_type == 'email-confirm':
-            token_generator = EmailConfirmationTokenGenerator
 
         if token_type == 'password-reset':
             token_generator = PasswordChangeTokenGenerator
@@ -236,26 +231,46 @@ class SendTokenView(APIView):
     def post(self, request, token_type):
         token_generator = None
 
-        try:
-            user = UserAccount.objects.get(email=request.data['email'])
-        except (UserAccount.DoesNotExist, KeyError):
-            return Response({'detail': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        email = request.data.get('email', None)
+        if not email:
+            return Response({'email': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if token_type == 'password-reset':
             token_generator = PasswordChangeTokenGenerator()
+            user = self._get_user_if_exists(email)
+            if not user:
+                return Response({'detail': 'User with given email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+            email_body = render_to_string(f'email/{token_type}.html', {
+                'user': user,
+                'token': token_generator.make_token(user),
+            })
+
         if token_type == 'email-confirm':
-            token_generator = EmailConfirmationTokenGenerator()
+            token_generator = EmailConfirmationUnregisteredTokenGenerator()
+            user = self._get_user_if_exists(email)
+
+            try:
+                validate_email(email)
+            except ValidationError:
+                return Response({'email': 'Given email address is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if user:
+                return Response({'detail': 'User with given email already exists.'}, status=status.HTTP_404_NOT_FOUND)
+
+            email_body = render_to_string(f'email/{token_type}.html', {'token': token_generator.make_token(email)})
 
         if not token_generator:
             return Response({'detail': 'Invalid token type.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        email_body = render_to_string(f'email/{token_type}.html', {
-            'user': user,
-            'token': token_generator.make_token(user),
-        })
-        send_mail('Desk2 Team', email_body, 'noreply@desk2.com', [user.email], fail_silently=False)
-
+        send_mail('Desk2 Team', email_body, 'noreply@desk2.com', [email], fail_silently=False)
         return Response({'detail': 'Token sent.'}, status=status.HTTP_200_OK)
+
+    def _get_user_if_exists(self, email):
+        try:
+            return UserAccount.objects.get(email=email)
+        except UserAccount.DoesNotExist:
+            return None
 
 
 class TokenObtainView(TokenObtainPairView):

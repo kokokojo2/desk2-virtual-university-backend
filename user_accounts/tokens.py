@@ -103,6 +103,42 @@ class EmailConfirmationTokenGenerator(RedisTokenMixin, PasswordResetTokenGenerat
         return str(user.pk) + str(round_timestamp(timestamp, 5)) + str(user.is_active)
 
 
+class EmailConfirmationUnregisteredTokenGenerator(PasswordResetTokenGenerator):
+    """Used to generate tokens to confirm emails independent of user model."""
+    token_length = settings.EMAIL_CONFIRM_TOKEN_LENGTH
+    token_timeout = settings.EMAIL_CONFIRM_TOKEN_TIMEOUT
+    basename = 'unregistered'
+
+    def make_token(self, email):
+        token = super().make_token(email)[-self.token_length:]
+        if settings.REDIS_STORED_TOKENS:
+            redis_client.set(
+                str(self.basename + '_' + email),
+                token,
+                ex=self.token_timeout
+            )
+
+        return token
+
+    def check_token(self, email, token, remove_from_storage=False):
+        if settings.REDIS_STORED_TOKENS:
+            redis_key_name = self.basename + '_' + str(email)
+            genuine_token = redis_client.get(redis_key_name)
+            if not genuine_token:
+                return False
+
+            genuine_token = genuine_token.decode('utf-8')
+            if remove_from_storage:
+                redis_client.delete(redis_key_name)
+
+            return token == genuine_token
+
+        return token == self.make_token(email)
+
+    def _make_hash_value(self, email, timestamp):
+        return str(email) + str(round_timestamp(timestamp, 5))
+
+
 class PasswordChangeTokenGenerator(RedisTokenMixin, PasswordResetTokenGenerator):
     """
     Used to generate 7-digit token for password reset.

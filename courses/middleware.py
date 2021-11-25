@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import resolve
 from rest_framework.status import HTTP_403_FORBIDDEN, HTTP_404_NOT_FOUND
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication, InvalidToken
 
 from .models import Course
 from .views import CourseMemberViewSet
@@ -25,11 +25,15 @@ class CourseMiddleware:
 
     def __call__(self, request):
         jwt_authenticator = JWTAuthentication()
-        authentication_result = jwt_authenticator.authenticate(request)
-        user = authentication_result[0] if authentication_result else request.user
+        user = request.user
+
+        try:
+            authentication_result = jwt_authenticator.authenticate(request)
+            user = authentication_result[0] if authentication_result else request.user
+        except InvalidToken:
+            pass
 
         view, _, kwargs = resolve(request.path)  # to get url params of a path
-
         if user.is_authenticated and 'course_id' in kwargs.keys():
             course = get_object_or_404(Course, pk=kwargs['course_id'])
 
