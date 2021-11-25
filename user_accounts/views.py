@@ -40,18 +40,22 @@ class AuthenticationViewSet(ViewSet):
         user_serializer = UserAccountSerializer(data=request.data)
         profile_serializer = get_serializer_for_profile(request.data)
 
+        email = request.data.get('email', None)
+        password = request.data.get('password', None)
+
+        if not email:
+            return Response({'email': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not password:
+            return Response({'password': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
         if profile_serializer is None:
             return Response(
                 {'profile_type': 'Invalid profile type. Should be student or teacher.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        user_saved, user = serializer_check_save(
-            user_serializer,
-            False,
-            password=request.data['password'],
-            email=request.data['email']
-        )
+        user_saved, user = serializer_check_save(user_serializer, False, password=password, email=email)
 
         if not user_saved:
             return Response(user, status=status.HTTP_400_BAD_REQUEST)
