@@ -58,7 +58,6 @@ class CourseMember(models.Model):
     STUDENT = 'S'
     TEACHER = 'T'
     AUDITOR = 'A'
-    OWNER = 'O'
 
     STATUSES = (
         (STUDENT, 'student'),
@@ -121,6 +120,7 @@ class Post(models.Model):
 
     class Meta:
         abstract = True
+        ordering = ['-created_at']
 
     @property
     def is_planned(self):
@@ -146,6 +146,7 @@ class Task(Post):
 class StudentWork(models.Model):
     class Meta:
         unique_together = ('task', 'owner')
+        ordering = ['submitted_at']
 
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
     owner = models.ForeignKey(CourseMember, on_delete=models.CASCADE)
