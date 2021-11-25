@@ -5,7 +5,9 @@ from utils.validators import get_regex_validator
 
 
 class Faculty(models.Model):
-    title = models.CharField(max_length=128, unique=True, validators=[get_regex_validator('title')])
+    title = models.CharField(max_length=128, unique=True, validators=[
+        get_regex_validator('title', numbers=False, special=False)
+    ])
     description = models.TextField(blank=True)
 
     def __str__(self):
@@ -13,7 +15,9 @@ class Faculty(models.Model):
 
 
 class Department(models.Model):
-    title = models.CharField(max_length=128, unique=True, validators=[get_regex_validator('title')])
+    title = models.CharField(max_length=128, unique=True, validators=[
+        get_regex_validator('title', numbers=False, special=False)
+    ])
     description = models.TextField(blank=True)
     faculty = models.ForeignKey(Faculty, on_delete=models.CASCADE)
 
@@ -22,7 +26,9 @@ class Department(models.Model):
 
 
 class Speciality(models.Model):
-    title = models.CharField(max_length=128, unique=True, validators=[get_regex_validator('title')])
+    title = models.CharField(max_length=128, unique=True, validators=[
+        get_regex_validator('title', special=False)
+    ])
     code = models.PositiveSmallIntegerField()
 
     def __str__(self):
@@ -43,14 +49,18 @@ class Group(models.Model):
 
 
 class Degree(models.Model):
-    name = models.CharField(max_length=128, unique=True, validators=[get_regex_validator('name')])
+    name = models.CharField(max_length=128, unique=True, validators=[
+        get_regex_validator('name', numbers=False, special=False)
+    ])
 
     def __str__(self):
         return f'{self.name}'
 
 
 class Position(models.Model):
-    name = models.CharField(max_length=128, unique=True, validators=[get_regex_validator('name')])
+    name = models.CharField(max_length=128, unique=True, validators=[
+        get_regex_validator('name', numbers=False, special=False)
+    ])
 
     def __str__(self):
         return f'{self.name}'

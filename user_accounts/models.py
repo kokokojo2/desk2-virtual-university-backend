@@ -40,9 +40,15 @@ class UserAccount(AbstractBaseUser):
     use safe **profile** property instead.
     """
 
-    first_name = models.CharField(max_length=128, validators=[get_regex_validator('first name', whitespace=False)])
-    last_name = models.CharField(max_length=128, validators=[get_regex_validator('last name', whitespace=False)])
-    middle_name = models.CharField(max_length=128, validators=[get_regex_validator('middle name', whitespace=False)])
+    first_name = models.CharField(max_length=128, validators=[
+        get_regex_validator('first name', whitespace=False, special=False, numbers=False)
+    ])
+    last_name = models.CharField(max_length=128, validators=[
+        get_regex_validator('last name', whitespace=False, special=False, numbers=False)
+    ])
+    middle_name = models.CharField(max_length=128, validators=[
+        get_regex_validator('middle name', whitespace=False, special=False, numbers=False)
+    ])
     email = models.EmailField(unique=True, max_length=256)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -109,8 +115,12 @@ class UserAccount(AbstractBaseUser):
 
 class TeacherProfile(models.Model):
     # TODO: change to foreign keys
-    scientific_degree = models.CharField(max_length=128, validators=[get_regex_validator('scientific degree')])
-    position = models.CharField(max_length=128, validators=[get_regex_validator('scientific degree')])
+    scientific_degree = models.CharField(max_length=128, validators=[
+        get_regex_validator('scientific degree', numbers=False, special=False)
+    ])
+    position = models.CharField(max_length=128, validators=[
+        get_regex_validator('position', numbers=False, special=False)
+    ])
 
     user = models.OneToOneField(UserAccount, related_name='teacher_profile', on_delete=models.CASCADE)
 
