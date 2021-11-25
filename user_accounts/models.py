@@ -46,7 +46,7 @@ class UserAccount(AbstractBaseUser):
     last_name = models.CharField(max_length=128, validators=[
         get_regex_validator('last name', whitespace=False, special=False, numbers=False)
     ])
-    middle_name = models.CharField(max_length=128, validators=[
+    middle_name = models.CharField(blank=True, max_length=128, validators=[
         get_regex_validator('middle name', whitespace=False, special=False, numbers=False)
     ])
     email = models.EmailField(unique=True, max_length=256)
@@ -63,7 +63,7 @@ class UserAccount(AbstractBaseUser):
     objects = UserAccountManager()
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'middle_name']
+    REQUIRED_FIELDS = ['first_name', 'last_name']
 
     @property
     def is_staff(self):
