@@ -27,6 +27,7 @@ class AuthenticationViewSet(ViewSet):
     Note: ViewSet base class instead of ModelViewSet is used to implement management of user and profile models in one
     request.
     """
+    db_exception_msg = 'User with this email already exists.'
 
     def get_permissions(self):
         permission_classes = []
@@ -132,7 +133,7 @@ class ChangePasswordView(APIView):
         password_serializer = PasswordSerializer(data=request.data, instance=request.user)
         if password_serializer.is_valid():
             password_serializer.save()
-            return Response({'status': 'Password changed'}, status=status.HTTP_204_NO_CONTENT)
+            return Response({'detail': 'Password changed'}, status=status.HTTP_204_NO_CONTENT)
 
         return Response(password_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -146,7 +147,7 @@ class ResetPasswordView(APIView):
             token = request.data['token']
             password = request.data['password']
         except (UserAccount.DoesNotExist, KeyError):
-            return Response({'status': 'password, token or email fields are not specified.'},
+            return Response({'detail': 'password, token or email fields are not specified.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
         if user and password and token_generator.check_token(user, token, remove_from_storage=True):
@@ -155,7 +156,7 @@ class ResetPasswordView(APIView):
 
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        return Response({'status': 'Confirmation token is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'Confirmation token is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ChangeEmailView(APIView):
@@ -167,7 +168,7 @@ class ChangeEmailView(APIView):
         try:
             validate_email(request.data['email'])
         except (ValidationError, KeyError):
-            return Response({'status': 'This email address is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'This email address is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user.email = request.data['email']
         user.email_confirmed = False
@@ -200,7 +201,7 @@ class ConfirmEmailView(APIView):
                 'access': str(tokens.access_token)
             }, status=status.HTTP_200_OK)
 
-        return Response({'status': 'Invalid email or token.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'detail': 'Invalid email or token.'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CheckTokenView(APIView):
@@ -212,7 +213,7 @@ class CheckTokenView(APIView):
             token = request.data['token']
             email = request.data['email']
         except KeyError:
-            return Response({'status': 'Email or token is not provided.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Email or token is not provided.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if token_type == 'email-confirm':
             token_generator = EmailConfirmationTokenGenerator
@@ -224,7 +225,7 @@ class CheckTokenView(APIView):
             token_generator = TwoFATokenGenerator
 
         if not token_generator:
-            return Response({'status': 'Invalid token type.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Invalid token type.'}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({'token_valid': check_token(token_generator, email, token)}
                         , status=status.HTTP_200_OK)
@@ -238,7 +239,7 @@ class SendTokenView(APIView):
         try:
             user = UserAccount.objects.get(email=request.data['email'])
         except (UserAccount.DoesNotExist, KeyError):
-            return Response({'status': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
         if token_type == 'password-reset':
             token_generator = PasswordChangeTokenGenerator()
@@ -246,7 +247,7 @@ class SendTokenView(APIView):
             token_generator = EmailConfirmationTokenGenerator()
 
         if not token_generator:
-            return Response({'status': 'Invalid token type.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'detail': 'Invalid token type.'}, status=status.HTTP_400_BAD_REQUEST)
 
         email_body = render_to_string(f'email/{token_type}.html', {
             'user': user,
@@ -254,7 +255,7 @@ class SendTokenView(APIView):
         })
         send_mail('Desk2 Team', email_body, 'noreply@desk2.com', [user.email], fail_silently=False)
 
-        return Response({'status': 'Token sent.'}, status=status.HTTP_200_OK)
+        return Response({'detail': 'Token sent.'}, status=status.HTTP_200_OK)
 
 
 class TokenObtainView(TokenObtainPairView):
@@ -266,17 +267,17 @@ class TokenObtainView(TokenObtainPairView):
         user = authenticate(username=request.data['email'], password=request.data['password'])
 
         if not user.email_confirmed:
-            return Response({'status': 'Mail verification is needed.'},
+            return Response({'detail': 'Mail verification is needed.'},
                             status=status.HTTP_403_FORBIDDEN)
 
         elif user.twoFA_enabled:
             if '2FA_code' not in request.data.keys():
                 send_2fa_token.run(user.pk)  # TODO: change to async mode after SMTP server will ge configured
-                return Response({'status': '2FA verification is needed.'}, status=status.HTTP_401_UNAUTHORIZED)
+                return Response({'detail': '2FA verification is needed.'}, status=status.HTTP_401_UNAUTHORIZED)
 
             token_generator = TwoFATokenGenerator()
             if not token_generator.check_token(user, request.data['2FA_code']):
-                return Response({'status': '2FA token is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'detail': '2FA token is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user.last_login = datetime.now()
         user.save()

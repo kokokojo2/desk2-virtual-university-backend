@@ -19,8 +19,8 @@ class NormalizedModelSerializer(ModelSerializer):
         normalize_for_type = {}
         normalize_for_field = {}
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         rules_for_type = getattr(self.Meta, 'normalize_for_type', {})
         rules_for_field = getattr(self.Meta, 'normalize_for_field', {})
 
@@ -47,3 +47,21 @@ class NormalizedModelSerializer(ModelSerializer):
                 self.initial_data[name] = value
 
         return super().is_valid(raise_exception=raise_exception)
+
+
+class WriteOnCreationMixin:
+    """
+    Provides functionality that allows to specify a list of fields to be written only when creating an object.
+    If serializer is used to update an existing object, the fields specified in **Meta.create_only_fields** will be not
+    updated.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.create_only_fields = getattr(self.Meta, 'create_only_fields', [])
+
+    def update(self, instance, validated_data):
+        for key in self.create_only_fields:
+            validated_data.pop(key, None)
+
+        return super().update(instance, validated_data)

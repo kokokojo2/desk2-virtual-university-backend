@@ -1,5 +1,6 @@
 from pathlib import Path
 from decouple import config
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -36,6 +37,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'courses.middleware.CourseMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -90,7 +92,9 @@ REST_FRAMEWORK = {
 
     'DEFAULT_THROTTLE_RATES': {
         'token-check': '15/minute',
-    }
+    },
+
+    'EXCEPTION_HANDLER': 'utils.exceptions.view_exception_handler',
 }
 
 
@@ -111,7 +115,10 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+SIMPLE_JWT = {
+    # WARNING! only for testing purpose TODO: change to a more sane value after tests
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=10),
+}
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
@@ -127,7 +134,10 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
+STATIC_URL = 'attachments/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'attachments/'
+]
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

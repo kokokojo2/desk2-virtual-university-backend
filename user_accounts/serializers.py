@@ -24,6 +24,12 @@ class UserAccountSerializer(NormalizedModelSerializer):
         return instance
 
 
+class UserAccountPublicSerializer(ModelSerializer):
+    class Meta:
+        model = UserAccount
+        fields = ['id', 'first_name', 'last_name', 'middle_name']
+
+
 class TeacherProfileSerializer(ModelSerializer):
     class Meta:
         model = TeacherProfile

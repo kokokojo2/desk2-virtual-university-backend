@@ -65,6 +65,11 @@ class UserAccount(AbstractBaseUser):
 
     @property
     def profile(self):
+        """
+        Returns an associated profile object.
+        :return: an StudentProfile or TeacherProfile object.
+        """
+
         try:
             model = self.student_profile
             return model
@@ -76,6 +81,22 @@ class UserAccount(AbstractBaseUser):
 
         return model
 
+    def get_course_members_queryset(self, **kwargs):
+        """
+        Returns a queryset of a CourseMember objects associated with this user object.
+        :param kwargs: any valid keyword args to be used with QuerySet.filter method.
+        :return: a QuerySet object
+        """
+        return self.coursemember_set.filter(**kwargs)
+
+    def get_course_member(self, course):
+        """
+        Returns a CourseMember object that is associated with a given course object and this user object.
+        :param course: a Course object
+        :return: a CourseMember object
+        """
+        return self.coursemember_set.get(course=course)
+
     def has_module_perms(self, app_label):
         return self.is_admin
 
@@ -83,7 +104,7 @@ class UserAccount(AbstractBaseUser):
         return self.is_admin
 
     def __str__(self):
-        return f'{self.last_name} {self.first_name}'
+        return f'{self.first_name} {self.middle_name} {self.last_name}'
 
 
 class TeacherProfile(models.Model):
