@@ -258,26 +258,46 @@ class SendTokenView(APIView):
     def post(self, request, token_type):
         token_generator = None
 
-        try:
-            user = UserAccount.objects.get(email=request.data['email'])
-        except (UserAccount.DoesNotExist, KeyError):
-            return Response({'detail': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+        email = request.data.get('email', None)
+        if not email:
+            return Response({'email': 'This field is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if token_type == 'password-reset':
             token_generator = PasswordChangeTokenGenerator()
+            user = self._get_user_if_exists(email)
+            if not user:
+                return Response({'detail': 'User with given email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+            email_body = render_to_string(f'email/{token_type}.html', {
+                'user': user,
+                'token': token_generator.make_token(user),
+            })
+
         if token_type == 'email-confirm':
-            token_generator = EmailConfirmationTokenGenerator()
+            token_generator = EmailConfirmationUnregisteredTokenGenerator()
+            user = self._get_user_if_exists(email)
+
+            try:
+                validate_email(email)
+            except ValidationError:
+                return Response({'email': 'Given email address is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if user:
+                return Response({'detail': 'User with given email already exists.'}, status=status.HTTP_404_NOT_FOUND)
+
+            email_body = render_to_string(f'email/{token_type}.html', {'token': token_generator.make_token(email)})
 
         if not token_generator:
             return Response({'detail': 'Invalid token type.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        email_body = render_to_string(f'email/{token_type}.html', {
-            'user': user,
-            'token': token_generator.make_token(user),
-        })
-        send_mail('Desk2 Team', email_body, 'noreply@desk2.com', [user.email], fail_silently=False)
-
+        send_mail('Desk2 Team', email_body, 'noreply@desk2.com', [email], fail_silently=False)
         return Response({'detail': 'Token sent.'}, status=status.HTTP_200_OK)
+
+    def _get_user_if_exists(self, email):
+        try:
+            return UserAccount.objects.get(email=email)
+        except UserAccount.DoesNotExist:
+            return None
 
 
 class TokenObtainView(TokenObtainPairView):
