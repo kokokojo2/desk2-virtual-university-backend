@@ -2,7 +2,7 @@ watch_file('./deploy/api.env')
 watch_file('./deploy/postgres.env')
 
 # declare docker-compose
-docker_compose("./deploy/docker-compose.yaml")
+docker_compose("./deploy/local-docker-compose.yaml")
 
 # desk2 backend
 docker_build(
