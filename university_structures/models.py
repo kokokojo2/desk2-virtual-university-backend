@@ -5,6 +5,9 @@ from utils.validators import get_regex_validator
 
 
 class Faculty(models.Model):
+    class Meta:
+        verbose_name_plural = 'Faculties'
+
     title = models.CharField(max_length=128, unique=True, validators=[
         get_regex_validator('title', numbers=False, special=False)
     ])
@@ -28,6 +31,9 @@ class Department(models.Model):
 
 
 class Speciality(models.Model):
+    class Meta:
+        verbose_name_plural = 'Specialities'
+
     title = models.CharField(max_length=128, unique=True, validators=[
         get_regex_validator('title', special=False)
     ])
