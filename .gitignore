@@ -121,3 +121,6 @@ GitHub.sublime-settings
 
 # local db
 local_tests_db
+
+# container-data
+deploy/container-data

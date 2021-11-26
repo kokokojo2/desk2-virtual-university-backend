@@ -1,4 +1,5 @@
 watch_file('./deploy/api.env')
+watch_file('./deploy/postgres.env')
 
 # declare docker-compose
 docker_compose("./deploy/docker-compose.yaml")
