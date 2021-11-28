@@ -9,15 +9,15 @@ from utils.validators import get_regex_validator, validate_number_len
 
 
 class UserAccountManager(BaseUserManager):
-    def create_user(self, email, password, first_name, last_name, middle_name):
-        if not all([email, password, first_name, last_name, middle_name]):
+    def create_user(self, email, password, first_name, last_name, middle_name=None):
+        if not all([email, password, first_name, last_name]):
             raise ValueError("Some of the required arguments are None, please, specify not None arguments.")
 
         user = self.model(
             email=self.normalize_email(email),
             first_name=Normalizer.first_capital(first_name),
             last_name=Normalizer.first_capital(last_name),
-            middle_name=Normalizer.first_capital(middle_name),
+            middle_name=Normalizer.first_capital(middle_name) if middle_name else '',
         )
         user.set_password(password)
         user.save(using=self._db)

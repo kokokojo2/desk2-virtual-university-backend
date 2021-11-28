@@ -5,13 +5,17 @@ from utils.validators import get_regex_validator
 
 
 class Faculty(models.Model):
+    class Meta:
+        verbose_name_plural = 'Faculties'
+
     title = models.CharField(max_length=128, unique=True, validators=[
         get_regex_validator('title', numbers=False, special=False)
     ])
     description = models.TextField(blank=True)
+    abbreviation = models.CharField(max_length=10, validators=[get_regex_validator('abbreviation')])
 
     def __str__(self):
-        return self.title
+        return self.abbreviation
 
 
 class Department(models.Model):
@@ -20,12 +24,16 @@ class Department(models.Model):
     ])
     description = models.TextField(blank=True)
     faculty = models.ForeignKey(Faculty, on_delete=models.CASCADE)
+    abbreviation = models.CharField(max_length=10, validators=[get_regex_validator('abbreviation')])
 
     def __str__(self):
-        return self.title
+        return self.abbreviation
 
 
 class Speciality(models.Model):
+    class Meta:
+        verbose_name_plural = 'Specialities'
+
     title = models.CharField(max_length=128, unique=True, validators=[
         get_regex_validator('title', special=False)
     ])
