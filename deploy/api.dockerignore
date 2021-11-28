@@ -1,3 +1,11 @@
+*.env
+.git
+.gitignore
+Dockerfile
+__pycache__
+container-data
+
+# from .gitignore
 # Django #
 *.log
 *.pot
