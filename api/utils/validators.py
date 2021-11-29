@@ -17,7 +17,7 @@ def get_regex_validator(field_name, custom_pattern=None, capitalized=True, hyphe
     """
 
     pattern = r'[' + ('A-ZА-ЯІЇЄҐ' if capitalized else '') + (r'\d' if numbers else '') +\
-              (r'!\.\(\).:\;' if special else '') + ']' + '[a-zа-яіїєґ' + (r'\-' if hyphen else '') +\
+              (r'!\.\(\).:\;' if special else '') + ']' + '[a-zа-яіїєґA-ZА-ЯІЇЄҐ\'' + (r'\-' if hyphen else '') +\
               (r'\s' if whitespace else '') + (r'\d' if numbers else '') + (r'!\.\(\).:;' if special else '') + ']+$'
 
     if custom_pattern:
