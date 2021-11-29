@@ -9,6 +9,8 @@ class FacultySerializer(ModelSerializer):
 
 
 class DepartmentSerializer(ModelSerializer):
+    faculty = FacultySerializer(read_only=True)
+
     class Meta:
         model = models.Department
         fields = '__all__'
@@ -21,6 +23,9 @@ class SpecialitySerializer(ModelSerializer):
 
 
 class GroupSerializer(ModelSerializer):
+    speciality = SpecialitySerializer(read_only=True)
+    department = DepartmentSerializer(read_only=True)
+
     class Meta:
         model = models.Group
         fields = '__all__'
