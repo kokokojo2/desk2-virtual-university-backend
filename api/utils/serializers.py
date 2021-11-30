@@ -1,5 +1,5 @@
 from itertools import chain
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, PrimaryKeyRelatedField
 
 
 class NormalizedModelSerializer(ModelSerializer):
@@ -65,3 +65,24 @@ class WriteOnCreationMixin:
             validated_data.pop(key, None)
 
         return super().update(instance, validated_data)
+
+
+class PrimaryKeyWriteMixin:
+    """
+    Provides a primary key serialization when creating an instance. Intended to be used for nested serialization.
+    Behaviour:
+    Returns related object on deserialization.
+    Returns a json representation of the related object on serialization.
+    Note: the data of this serializer should be the primary key of the related object.
+    To better understand the behaviour examine this question - https://stackoverflow.com/questions/28010663/serializerclass-field-on-serializer-save-from-primary-key
+    """
+
+    def _get_model_class(self):
+        return self.Meta.model
+
+    def get_primary_key_queryset(self, model):
+        return model.objects.all()
+
+    def to_internal_value(self, data):
+        rel_field = PrimaryKeyRelatedField(queryset=self.get_primary_key_queryset(self._get_model_class()))
+        return rel_field.to_internal_value(data)
