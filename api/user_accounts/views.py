@@ -59,8 +59,8 @@ class AuthenticationViewSet(ViewSet):
                 {'profile_type': 'Invalid profile type. Should be student or teacher.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        if not EmailConfirmationUnregisteredTokenGenerator().check_token(email, token, remove_from_storage=True):
+        token_generator = EmailConfirmationUnregisteredTokenGenerator()
+        if not token_generator.check_token(email, token, remove_from_storage=False):
             return Response({'email-token': 'Given token is invalid. Make sure to check your email.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -75,6 +75,8 @@ class AuthenticationViewSet(ViewSet):
             user.delete()
             return Response(result, status=status.HTTP_400_BAD_REQUEST)
 
+        # FIXME: use remove_token method instead when it will be created
+        token_generator.check_token(email, token, remove_from_storage=True)
         response_dict = user_serializer.data
         response_dict.update(profile_serializer.data)
 
@@ -163,9 +165,12 @@ class ResetPasswordView(APIView):
             return Response({'detail': 'password, token or email fields are not specified.'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        if user and password and token_generator.check_token(user, token, remove_from_storage=True):
+        if user and password and token_generator.check_token(user, token, remove_from_storage=False):
             user.set_password(password)
             user.save()
+
+            # FIXME: use remove_token method instead when it will be created
+            token_generator.check_token(user, token, remove_from_storage=True)
 
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -261,7 +266,7 @@ class SendTokenView(APIView):
                 return Response({'email': 'Given email address is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
             if user:
-                return Response({'detail': 'User with given email already exists.'}, status=status.HTTP_404_NOT_FOUND)
+                return Response({'detail': 'User with given email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
             email_body = render_to_string(f'email/{token_type}.html', {'token': token_generator.make_token(email)})
 
@@ -299,6 +304,8 @@ class TokenObtainView(TokenObtainPairView):
             if not token_generator.check_token(user, request.data['2FA_code']):
                 return Response({'detail': '2FA token is not valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
+            # FIXME: use remove_token method instead when it will be created
+            token_generator.check_token(user, request.data['2FA_code'], remove_from_storage=True)
         user.last_login = datetime.now()
         user.save()
 
