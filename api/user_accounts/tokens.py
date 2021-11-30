@@ -155,7 +155,7 @@ class TwoFATokenGenerator(RedisTokenMixin, PasswordResetTokenGenerator):
     """
     Used to generate 7-digit token for password reset.
     """
-    redis_key_basename = 'password'
+    redis_key_basename = '2fa'
     token_length = settings.TWO_FA_TOKEN_LENGTH
     token_timeout = settings.TWO_FA_TOKEN_TIMEOUT
 
