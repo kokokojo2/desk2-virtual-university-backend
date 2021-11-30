@@ -5,9 +5,13 @@ from rest_framework import serializers
 from .models import UserAccount, TeacherProfile, StudentProfile
 from utils.normalizers import Normalizer
 from utils.serializers import NormalizedModelSerializer
+from university_structures.serializers import DepartmentNestedSerializer, DegreeNestedSerializer,\
+    PositionNestedSerializer, GroupNestedSerializer
 
 
 class UserAccountSerializer(NormalizedModelSerializer):
+    department = DepartmentNestedSerializer()
+
     class Meta:
         model = UserAccount
         exclude = ['password']
@@ -31,12 +35,17 @@ class UserAccountPublicSerializer(ModelSerializer):
 
 
 class TeacherProfileSerializer(ModelSerializer):
+    position = PositionNestedSerializer()
+    scientific_degree = DegreeNestedSerializer()
+
     class Meta:
         model = TeacherProfile
         exclude = ['user', 'id']
 
 
 class StudentProfileSerializer(ModelSerializer):
+    group = GroupNestedSerializer()
+
     class Meta:
         model = StudentProfile
         exclude = ['user', 'id']
