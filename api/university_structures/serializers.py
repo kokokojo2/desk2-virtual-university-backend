@@ -1,6 +1,8 @@
 from rest_framework.serializers import ModelSerializer
 from . import models
 
+from utils.serializers import PrimaryKeyWriteMixin
+
 
 class FacultySerializer(ModelSerializer):
     class Meta:
@@ -41,3 +43,19 @@ class PositionSerializer(ModelSerializer):
     class Meta:
         model = models.Position
         fields = '__all__'
+
+
+class GroupNestedSerializer(PrimaryKeyWriteMixin, GroupSerializer):
+    pass
+
+
+class PositionNestedSerializer(PrimaryKeyWriteMixin, PositionSerializer):
+    pass
+
+
+class DegreeNestedSerializer(PrimaryKeyWriteMixin, DegreeSerializer):
+    pass
+
+
+class DepartmentNestedSerializer(PrimaryKeyWriteMixin, DepartmentSerializer):
+    pass
