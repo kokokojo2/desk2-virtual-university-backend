@@ -219,6 +219,11 @@ class CheckTokenView(APIView):
         if token_type == 'twoFA-auth':
             token_generator = TwoFATokenGenerator
 
+        if token_type == 'email-confirm':
+            token_generator = EmailConfirmationUnregisteredTokenGenerator
+            return Response({'token_valid': token_generator().check_token(email, token)},
+                            status=status.HTTP_200_OK)
+
         if not token_generator:
             return Response({'detail': 'Invalid token type.'}, status=status.HTTP_400_BAD_REQUEST)
 
