@@ -3,7 +3,7 @@ from functools import partial
 from django.db import models
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 
-from university_structures.models import Department, Group
+from university_structures.models import Department, Group, Degree, Position
 from utils.normalizers import Normalizer
 from utils.validators import get_regex_validator, validate_number_len
 
@@ -114,13 +114,8 @@ class UserAccount(AbstractBaseUser):
 
 
 class TeacherProfile(models.Model):
-    # TODO: change to foreign keys
-    scientific_degree = models.CharField(max_length=128, validators=[
-        get_regex_validator('scientific degree', numbers=False, special=False)
-    ])
-    position = models.CharField(max_length=128, validators=[
-        get_regex_validator('position', numbers=False, special=False)
-    ])
+    scientific_degree = models.ForeignKey(Degree, on_delete=models.CASCADE)
+    position = models.ForeignKey(Position, on_delete=models.CASCADE)
 
     user = models.OneToOneField(UserAccount, related_name='teacher_profile', on_delete=models.CASCADE)
 
@@ -129,7 +124,7 @@ class StudentProfile(models.Model):
     student_card_id = models.BigIntegerField(validators=[partial(validate_number_len, digits_number=8)])
     user = models.OneToOneField(UserAccount, related_name='student_profile', on_delete=models.CASCADE)
 
-    group = models.ForeignKey(Group, null=True, on_delete=models.SET_NULL)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
 
 
 
