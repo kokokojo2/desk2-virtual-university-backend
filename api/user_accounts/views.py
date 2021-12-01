@@ -13,12 +13,11 @@ from rest_framework.views import APIView
 from rest_framework.decorators import action
 
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from .utils import get_serializer_for_profile, get_serializer_for_profile_obj, serializer_check_save
 from .serializers import UserAccountSerializer, PasswordSerializer
 from .models import UserAccount
-from .tokens import check_token, EmailConfirmationTokenGenerator, PasswordChangeTokenGenerator, TwoFATokenGenerator, \
+from .tokens import check_token, PasswordChangeTokenGenerator, TwoFATokenGenerator, \
     EmailConfirmationUnregisteredTokenGenerator
 from .tasks import send_2fa_token
 
@@ -77,6 +76,7 @@ class AuthenticationViewSet(ViewSet):
 
         # FIXME: use remove_token method instead when it will be created
         token_generator.check_token(email, token, remove_from_storage=True)
+        user.type = user.STUDENT if request.data['profile_type'] == 'student' else user.TEACHER
         response_dict = user_serializer.data
         response_dict.update(profile_serializer.data)
 
