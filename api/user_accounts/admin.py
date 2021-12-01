@@ -20,7 +20,7 @@ class StudentProfileModelInline(admin.StackedInline):
         return False
 
 
-class TeacherProfileModelInline(admin.TabularInline):
+class TeacherProfileModelInline(admin.StackedInline):
     model = TeacherProfile
 
     def has_delete_permission(self, request, obj=None):
