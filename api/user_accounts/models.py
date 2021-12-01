@@ -28,6 +28,7 @@ class UserAccountManager(BaseUserManager):
         user = self.create_user(**kwargs)
         user.is_admin = True
         user.is_active = True
+        user.type = user.STAFF
         user.save(using=self.db)
 
         return user
@@ -58,9 +59,21 @@ class UserAccount(AbstractBaseUser):
     is_admin = models.BooleanField(default=False)
     email_confirmed = models.BooleanField(default=False)
     twoFA_enabled = models.BooleanField(default=True)
-
     department = models.ForeignKey(Department, null=True, on_delete=models.SET_NULL)
     objects = UserAccountManager()
+
+    # only for admin filtering WARNING: do not use to check permissions
+    TEACHER = 'T'
+    STAFF = 'A'
+    STUDENT = 'S'
+    STATUSES = (
+        (TEACHER, 'Teacher'),
+        (STUDENT, 'Student'),
+        (STAFF, 'Staff'),
+    )
+
+    # WARNING: won`t change if the user is_admin will be set to true in the admin
+    registration_type = models.CharField(choices=STATUSES, blank=True, max_length=1)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
@@ -119,6 +132,9 @@ class TeacherProfile(models.Model):
 
     user = models.OneToOneField(UserAccount, related_name='teacher_profile', on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f'Teacher information'
+
 
 class StudentProfile(models.Model):
     student_card_id = models.BigIntegerField(validators=[partial(validate_number_len, digits_number=8)])
@@ -126,6 +142,7 @@ class StudentProfile(models.Model):
 
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
 
-
+    def __str__(self):
+        return f'Student information'
 
 
