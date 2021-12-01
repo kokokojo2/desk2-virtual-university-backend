@@ -1,16 +1,6 @@
 from django.contrib import admin
 from .models import UserAccount, TeacherProfile, StudentProfile
-
-
-class ReadOnlyInlineMixin:
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_add_permission(self, request, obj):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
+from utils.admin import ReadOnlyInlineMixin
 
 
 class StudentProfileModelInline(admin.StackedInline):
