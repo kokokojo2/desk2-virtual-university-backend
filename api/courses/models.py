@@ -72,6 +72,9 @@ class CourseMember(models.Model):
     def is_teacher(self):
         return self.role == self.TEACHER
 
+    def __str__(self):
+        return f'{self.user.first_name}  {self.user.last_name}'
+
 
 class Chapter(models.Model):
     title = models.CharField(max_length=128, validators=[MinLengthValidator(3), get_regex_validator('title')])
@@ -98,7 +101,7 @@ class Attachment(models.Model):
     file = models.FileField(upload_to='attachments/')
 
     def __str__(self):
-        return self.file.name
+        return self.file_name
 
     @property
     def file_name(self):
@@ -125,6 +128,9 @@ class Post(models.Model):
     @property
     def is_planned(self):
         return self.published_at > timezone.now()
+
+    def __str__(self):
+        return self.title
 
 
 class Material(Post):
@@ -174,6 +180,9 @@ class StudentWork(models.Model):
     def is_submitted(self):
         return self.status == self.SUBMITTED
 
+    def __str__(self):
+        return f'Answer to the {self.task.title} task'
+
 
 class Grade(models.Model):
     description = models.CharField(max_length=128, blank=True, validators=[get_regex_validator('description')])
@@ -182,3 +191,6 @@ class Grade(models.Model):
 
     work = models.OneToOneField(StudentWork, on_delete=models.CASCADE)
     grader = models.ForeignKey(CourseMember, on_delete=models.SET_NULL, null=True)
+
+    def __str__(self):
+        return f'{self.amount} {self.description}'
