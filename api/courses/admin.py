@@ -6,7 +6,7 @@ from utils.admin import ReadOnlyInlineMixin
 
 class CourseMemberInline(admin.TabularInline):
     model = models.CourseMember
-    readonly_fields = ['user']
+    #readonly_fields = ['user']
     extra = 0
 
 
