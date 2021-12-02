@@ -44,6 +44,12 @@ class AttachmentInline(GenericTabularInline):
         return False
 
 
+class GradeInline(ReadOnlyInlineMixin, admin.TabularInline):
+    model = models.Grade
+    fields = ['amount', 'description', 'grader']
+    show_change_link = True
+
+
 class ChapterAdmin(admin.ModelAdmin):
     inlines = [MaterialInline, TaskInline]
     model = models.Chapter
@@ -79,7 +85,7 @@ class TaskAdmin(PostAdmin):
 
 class StudentWorkAdmin(admin.ModelAdmin):
     model = models.StudentWork
-    inlines = [AttachmentInline]
+    inlines = [AttachmentInline, GradeInline]
     list_display = ['task', 'owner', 'status', 'submitted_at']
     list_filter = ['task', 'owner', 'status']
 
@@ -87,8 +93,15 @@ class StudentWorkAdmin(admin.ModelAdmin):
         return False
 
 
+class GradeAdmin(admin.ModelAdmin):
+    model = models.Grade
+    readonly_fields = ['work', 'grader']
+    list_filter = ['work', 'grader']
+
+
 admin.site.register(models.Course, CourseAdmin)
 admin.site.register(models.Material, MaterialAdmin)
 admin.site.register(models.Chapter, ChapterAdmin)
 admin.site.register(models.Task, TaskAdmin)
 admin.site.register(models.StudentWork, StudentWorkAdmin)
+admin.site.register(models.Grade, GradeAdmin)
