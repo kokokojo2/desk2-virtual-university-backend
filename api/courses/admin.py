@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
 from . import models
 from utils.admin import ReadOnlyInlineMixin
 
@@ -35,6 +36,14 @@ class StudentWorkInline(ReadOnlyInlineMixin, admin.TabularInline):
     show_change_link = True
 
 
+class AttachmentInline(GenericTabularInline):
+    model = models.Attachment
+    extra = 0
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 class ChapterAdmin(admin.ModelAdmin):
     inlines = [MaterialInline, TaskInline]
     model = models.Chapter
@@ -53,6 +62,7 @@ class CourseAdmin(admin.ModelAdmin):
 
 
 class PostAdmin(admin.ModelAdmin):
+    inlines = [AttachmentInline]
     list_display = ['title', 'published_at', 'chapter', 'is_archived']
     readonly_fields = ['created_at', 'edited_at', 'chapter']
     list_filter = ['is_archived', 'author__user']
@@ -64,11 +74,12 @@ class MaterialAdmin(PostAdmin):
 
 class TaskAdmin(PostAdmin):
     model = models.Task
-    inlines = [StudentWorkInline]
+    inlines = [StudentWorkInline] + PostAdmin.inlines
 
 
 class StudentWorkAdmin(admin.ModelAdmin):
     model = models.StudentWork
+    inlines = [AttachmentInline]
     list_display = ['task', 'owner', 'status', 'submitted_at']
     list_filter = ['task', 'owner', 'status']
 
