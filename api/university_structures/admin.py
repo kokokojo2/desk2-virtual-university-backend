@@ -1,6 +1,8 @@
 from django.contrib import admin
 from . import models
 
+from user_accounts.admin import StudentInline, TeacherInline
+
 
 class DepartmentAdmin(admin.ModelAdmin):
     model = models.Department
@@ -18,6 +20,7 @@ class FacultyAdmin(admin.ModelAdmin):
 
 
 class GroupAdmin(admin.ModelAdmin):
+    inlines = [StudentInline]
     model = models.Group
 
     list_display = ['name', 'study_year', 'department', 'speciality']
@@ -33,11 +36,13 @@ class SpecialityAdmin(admin.ModelAdmin):
 
 
 class PositionAdmin(admin.ModelAdmin):
+    inlines = [TeacherInline]
     model = models.Position
     search_fields = ['name']
 
 
 class DegreeAdmin(admin.ModelAdmin):
+    inlines = [TeacherInline]
     model = models.Degree
     search_fields = ['name']
 
