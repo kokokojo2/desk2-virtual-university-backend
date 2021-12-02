@@ -29,12 +29,19 @@ class TaskInline(PostInline):
     model = models.Task
 
 
+class StudentWorkInline(ReadOnlyInlineMixin, admin.TabularInline):
+    model = models.StudentWork
+    fields = ['owner', 'status', 'submitted_at']
+    show_change_link = True
+
+
 class ChapterAdmin(admin.ModelAdmin):
     inlines = [MaterialInline, TaskInline]
     model = models.Chapter
 
     list_display = ['title', 'created_at', 'course']
     list_filter = ['course__title']
+    readonly_fields = ['course']
 
 
 class CourseAdmin(admin.ModelAdmin):
@@ -47,7 +54,7 @@ class CourseAdmin(admin.ModelAdmin):
 
 class PostAdmin(admin.ModelAdmin):
     list_display = ['title', 'published_at', 'chapter', 'is_archived']
-    readonly_fields = ['created_at', 'edited_at']
+    readonly_fields = ['created_at', 'edited_at', 'chapter']
     list_filter = ['is_archived', 'author__user']
 
 
@@ -57,9 +64,20 @@ class MaterialAdmin(PostAdmin):
 
 class TaskAdmin(PostAdmin):
     model = models.Task
+    inlines = [StudentWorkInline]
+
+
+class StudentWorkAdmin(admin.ModelAdmin):
+    model = models.StudentWork
+    list_display = ['task', 'owner', 'status', 'submitted_at']
+    list_filter = ['task', 'owner', 'status']
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 admin.site.register(models.Course, CourseAdmin)
 admin.site.register(models.Material, MaterialAdmin)
 admin.site.register(models.Chapter, ChapterAdmin)
 admin.site.register(models.Task, TaskAdmin)
+admin.site.register(models.StudentWork, StudentWorkAdmin)
