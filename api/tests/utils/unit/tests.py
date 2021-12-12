@@ -1,12 +1,11 @@
 from django.test import SimpleTestCase, TestCase
 from django.db import models
+from tests import utils
 
 from utils import normalizers
 from utils import serializers
 from utils import validators
 
-from university_structures.models import Faculty, Department
-from user_accounts.models import UserAccount
 from user_accounts.serializers import UserAccountSerializer
 
 
@@ -65,28 +64,11 @@ class WriteOnCreationMixinTestCase(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        faculty = Faculty.objects.create(
-            title='Institute for Applied System Analysis',
-            description='Dummy desc.',
-            abbreviation='IASA'
-        )
-        cls.department = Department.objects.create(
-            title='Cathedra of System Projecting',
-            description='Dummy desc.',
-            faculty=faculty,
-            abbreviation='SP'
-        )
-
-        cls.user = UserAccount.objects.create(
-            first_name='Test',
-            last_name='User',
-            email='testmail@test.com',
-            department=cls.department
-        )
+        cls.user = utils.populate_users()
 
     def test_serialization(self):
         serializer = UserAccountSerializer(instance=self.user)
-        self.assertEquals(self.department.abbreviation, serializer.data['department']['abbreviation'])
+        self.assertEquals(self.user.department.abbreviation, serializer.data['department']['abbreviation'])
 
     def test_deserialization(self):
         serializer = UserAccountSerializer(data={
@@ -97,7 +79,7 @@ class WriteOnCreationMixinTestCase(TestCase):
         })
         if serializer.is_valid():
             user = serializer.save()
-            self.assertEquals(self.department.abbreviation, user.department.abbreviation)
+            self.assertEquals(self.user.department.abbreviation, user.department.abbreviation)
 
 
 class RegexValidatorTestCase(SimpleTestCase):
