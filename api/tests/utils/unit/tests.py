@@ -1,8 +1,13 @@
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 from django.db import models
 
 from utils import normalizers
 from utils import serializers
+from utils import validators
+
+from university_structures.models import Faculty, Department
+from user_accounts.models import UserAccount
+from user_accounts.serializers import UserAccountSerializer
 
 
 class NormalizerTestCase(SimpleTestCase):
@@ -54,3 +59,70 @@ class NormalizedModelSerializerTestCase(SimpleTestCase):
         serializer = self.FieldNormalizedSerializer(data={'normalized_field': 'BadStRinG'})
         serializer.is_valid()
         self.assertEquals(serializer.data['normalized_field'], 'Badstring')
+
+
+class WriteOnCreationMixinTestCase(TestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        faculty = Faculty.objects.create(
+            title='Institute for Applied System Analysis',
+            description='Dummy desc.',
+            abbreviation='IASA'
+        )
+        cls.department = Department.objects.create(
+            title='Cathedra of System Projecting',
+            description='Dummy desc.',
+            faculty=faculty,
+            abbreviation='SP'
+        )
+
+        cls.user = UserAccount.objects.create(
+            first_name='Test',
+            last_name='User',
+            email='testmail@test.com',
+            department=cls.department
+        )
+
+    def test_serialization(self):
+        serializer = UserAccountSerializer(instance=self.user)
+        self.assertEquals(self.department.abbreviation, serializer.data['department']['abbreviation'])
+
+    def test_deserialization(self):
+        serializer = UserAccountSerializer(data={
+            'first_name': 'Test',
+            'last_name': 'User',
+            'email': 'testmail@test.com',
+            'department': 1
+        })
+        if serializer.is_valid():
+            user = serializer.save()
+            self.assertEquals(self.department.abbreviation, user.department.abbreviation)
+
+
+class RegexValidatorTestCase(SimpleTestCase):
+
+    def test_first_capital(self):
+        validator = validators.get_regex_validator('test')
+        validator('Capitalized')
+
+    def test_hyphen_inside(self):
+        validator = validators.get_regex_validator('test')
+        validator('Text-with-hyphens')
+
+    def test_whitespaces_inside(self):
+        validator = validators.get_regex_validator('test')
+        validator('Text with whitespaces')
+
+    def test_numbers_inside(self):
+        validator = validators.get_regex_validator('test')
+        validator('Numb1ersins1de')
+
+    def test_special_sym_inside(self):
+        validator = validators.get_regex_validator('test')
+        validator('Hi;.,()!')
+
+    def test_cyrillic(self):
+        validator = validators.get_regex_validator('test')
+        print(validator.regex)
+        validator('Український текст і буква ґ')
