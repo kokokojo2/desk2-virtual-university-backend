@@ -56,7 +56,6 @@ class ChapterAdmin(admin.ModelAdmin):
 
     list_display = ['title', 'created_at', 'course']
     list_filter = ['course__title']
-    readonly_fields = ['course']
 
 
 class CourseAdmin(admin.ModelAdmin):
