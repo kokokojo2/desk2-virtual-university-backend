@@ -1,6 +1,6 @@
 from django.test import SimpleTestCase, TestCase
 from django.db import models
-from tests import utils
+from tests import utility_funcs
 
 from utils import normalizers
 from utils import serializers
@@ -64,7 +64,7 @@ class WriteOnCreationMixinTestCase(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.user = utils.populate_users()
+        cls.user = utility_funcs.populate_users()[0]
 
     def test_serialization(self):
         serializer = UserAccountSerializer(instance=self.user)
@@ -106,5 +106,4 @@ class RegexValidatorTestCase(SimpleTestCase):
 
     def test_cyrillic(self):
         validator = validators.get_regex_validator('test')
-        print(validator.regex)
         validator('Український текст і буква ґ')
