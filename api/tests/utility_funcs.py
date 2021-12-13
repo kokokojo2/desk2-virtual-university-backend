@@ -58,8 +58,6 @@ def populate_users():
     )
 
     user_accounts.StudentProfile.objects.create(
-        position=position,
-        scientific_degree=scientific_degree,
         user=student,
         group=group,
         student_card_id=11122233
