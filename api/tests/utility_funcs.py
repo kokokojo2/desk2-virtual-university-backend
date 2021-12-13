@@ -1,6 +1,7 @@
 from university_structures import models as university_structures
 from user_accounts import models as user_accounts
 from courses import models as courses
+from django.utils import timezone
 
 
 def populate_users():
@@ -87,3 +88,28 @@ def populate_course(owner, students):
         )
 
     return course
+
+
+def populate_course_content(course, teacher, student):
+    chapter = courses.Chapter.objects.create(
+        title='Test chapter',
+        description='The desc.',
+        course=course
+    )
+
+    task = courses.Task.objects.create(
+        title='Test task',
+        body='Test body.',
+        published_at=timezone.now(),
+        chapter=chapter,
+        author=teacher,
+        max_grade=12,
+        deadline=timezone.now()
+    )
+
+    student_work = courses.StudentWork.objects.create(
+        task=task,
+        owner=student,
+    )
+
+    return task, student_work
