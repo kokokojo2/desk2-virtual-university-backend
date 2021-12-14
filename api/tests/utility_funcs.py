@@ -29,7 +29,7 @@ def populate_users():
     teacher = user_accounts.UserAccount.objects.create(
         first_name='John',
         last_name='Loe',
-        email='teacher@test.com',
+        email=teacher_email,
         department=department
     )
 
@@ -42,7 +42,7 @@ def populate_users():
     student = user_accounts.UserAccount.objects.create(
         first_name='Dane',
         last_name='Green',
-        email='student@test.com',
+        email=student_email,
         department=department
     )
 
@@ -113,3 +113,39 @@ def populate_course_content(course, teacher, student):
     )
 
     return task, student_work
+
+
+class ViewSetTestCase(TestCase):
+    def _get_response(self, url_name, **kwargs):
+        data = kwargs.pop('data', {})
+        method = kwargs.pop('method', 'GET')
+        expected_status_code = kwargs.pop('expected_status_code', 200)
+        pk = kwargs.pop('pk', None)
+        url = reverse(url_name) if not pk else reverse(url_name, kwargs={'pk': pk})
+
+        func = self.client.get
+        if method == 'POST':
+            func = self.client.post
+            kwargs['content_type'] = 'application/json'
+
+        if method == 'PUT':
+            func = self.client.put
+            kwargs['content_type'] = 'application/json'
+
+        if method == 'DELETE':
+            func = self.client.delete
+
+        response = func(url, data, **kwargs)
+        self.assertEquals(expected_status_code, response.status_code)
+
+        return response
+
+
+class AuthorizedViewSetTestCase(ViewSetTestCase):
+    def get_response(self, url_name, user, **kwargs):
+        token = getattr(self, 'access_token', None)
+        if not token:
+            refresh = RefreshToken.for_user(user)
+            self.token = str(refresh.access_token)
+
+        return self._get_response(url_name, HTTP_AUTHORIZATION=f'Bearer {self.token}', **kwargs)
