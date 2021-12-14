@@ -7,7 +7,7 @@ from courses.permissions import *
 class PermissionTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.teacher, cls.student = utility_funcs.populate_users()
+        cls.teacher, cls.student = utility_funcs.populate_users('teacher@gmail.com', 'student@gmail.com')
         cls.course = utility_funcs.populate_course(cls.teacher, [cls.student])
 
 

@@ -64,7 +64,7 @@ class WriteOnCreationMixinTestCase(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.user = utility_funcs.populate_users()[0]
+        cls.user = utility_funcs.populate_users('teacher@gmail.com', 'student@gmail.com')[0]
 
     def test_serialization(self):
         serializer = UserAccountSerializer(instance=self.user)
