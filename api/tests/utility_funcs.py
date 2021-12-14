@@ -2,9 +2,136 @@ from university_structures import models as university_structures
 from user_accounts import models as user_accounts
 from courses import models as courses
 from django.utils import timezone
+from django.urls import reverse
+from django.test import TestCase
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
-def populate_users():
+class TestDataManager:
+    def __init__(self):
+        self.faculties = []
+        self.departments = []
+        self.degrees = []
+        self.positions = []
+        self.specialities = []
+        self.groups = []
+        self.create_faculty()
+        self.create_speciality()
+        self.create_degree()
+        self.create_position()
+        self.create_department(self.faculties[0])
+        self.create_group(self.departments[0], self.specialities[0])
+
+    def create_teacher(self, email, **kwargs):
+        department = kwargs.pop('department', self.departments[0])
+        degree = kwargs.pop('degree', self.degrees[0])
+        position = kwargs.pop('position', self.positions[0])
+
+        teacher = user_accounts.UserAccount.objects.create(
+            first_name='John',
+            last_name='Loe',
+            email=email,
+            department=department
+        )
+
+        user_accounts.TeacherProfile.objects.create(
+            position=position,
+            scientific_degree=degree,
+            user=teacher
+        )
+
+        return teacher
+
+    def create_student(self, email, **kwargs):
+        department = kwargs.pop('department', self.departments[0])
+        group = kwargs.pop('group', self.groups[0])
+
+        student = user_accounts.UserAccount.objects.create(
+            first_name='Dane',
+            last_name='Green',
+            email=email,
+            department=department
+        )
+
+        user_accounts.StudentProfile.objects.create(
+            user=student,
+            group=group,
+            student_card_id=11122233
+        )
+
+        return student
+
+    def create_faculty(self, **kwargs):
+        if not kwargs:
+            faculty = university_structures.Faculty.objects.create(
+                title='Institute for Applied System Analysis',
+                description='Dummy desc.',
+                abbreviation='IASA'
+            )
+        else:
+            faculty = university_structures.Faculty.objects.create(**kwargs)
+
+        self.faculties.append(faculty)
+
+    def create_department(self, faculty, **kwargs):
+        if not kwargs:
+            department = university_structures.Department.objects.create(
+                title='Cathedra of System Design',
+                description='Dummy desc.',
+                faculty=faculty,
+                abbreviation='SP'
+            )
+        else:
+            department = university_structures.Department.objects.create(faculty=faculty, **kwargs)
+
+        self.departments.append(department)
+
+    def create_degree(self, **kwargs):
+        if not kwargs:
+            scientific_degree = university_structures.Degree.objects.create(
+                name='Doctor'
+            )
+        else:
+            scientific_degree = university_structures.Degree.objects.create(**kwargs)
+
+        self.degrees.append(scientific_degree)
+
+    def create_position(self, **kwargs):
+        if not kwargs:
+            position = university_structures.Position.objects.create(
+                name='Doctor'
+            )
+        else:
+            position = university_structures.Position.objects.create(**kwargs)
+
+        self.positions.append(position)
+
+    def create_speciality(self, **kwargs):
+        if not kwargs:
+            speciality = university_structures.Speciality.objects.create(
+                title='Computer Science',
+                code=122
+            )
+        else:
+            speciality = university_structures.Speciality.objects.create(**kwargs)
+
+        self.specialities.append(speciality)
+
+    def create_group(self, department, speciality, **kwargs):
+        if not kwargs:
+            group = university_structures.Group.objects.create(
+                name='ДА-92',
+                study_year=3,
+                department=department,
+                speciality=speciality
+            )
+        else:
+            group = university_structures.Group.objects.create(department=department, speciality=speciality, **kwargs)
+
+        self.groups.append(group)
+
+
+def populate_users(teacher_email, student_email):
     faculty = university_structures.Faculty.objects.create(
         title='Institute for Applied System Analysis',
         description='Dummy desc.',
