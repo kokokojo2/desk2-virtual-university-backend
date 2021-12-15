@@ -15,11 +15,11 @@ class CourseViewSetTestCase(utility_funcs.AuthorizedViewSetTestCase):
     def setUp(self):
         self.client = Client()
         self.course_json = {
-                'title': 'Object-oriented programming',
-                'description': 'Dummy desc.',
-                'department': 1,
-                'speciality': 1
-            }
+            'title': 'Object-oriented programming',
+            'description': 'Dummy desc.',
+            'department': self.data_manager.departments[0].pk,
+            'speciality': self.data_manager.specialities[0].pk
+        }
 
     def test_get_courses(self):
         response = self.get_response('course-list', self.teacher)
@@ -59,7 +59,7 @@ class CourseViewSetTestCase(utility_funcs.AuthorizedViewSetTestCase):
         response = self.get_response(
             'course-detail',
             self.teacher,
-            pk=1,
+            url_params={'pk': self.course.pk},
             data=updated_course,
             method='PUT',
             expected_status_code=200
@@ -75,7 +75,7 @@ class CourseViewSetTestCase(utility_funcs.AuthorizedViewSetTestCase):
         response = self.get_response(
             'course-detail',
             not_owner_but_teacher,
-            pk=1,
+            url_params={'pk': self.course.pk},
             data=updated_course,
             method='PUT',
             expected_status_code=403
@@ -84,12 +84,13 @@ class CourseViewSetTestCase(utility_funcs.AuthorizedViewSetTestCase):
         self.assertEquals('permission_denied', response.data['detail'].code)
 
     def test_delete_course(self):
+        temp_course = utility_funcs.populate_course(self.teacher, [])
         self.get_response(
             'course-detail',
             self.teacher,
-            pk=1,
+            url_params={'pk': temp_course.pk},
             method='DELETE',
             expected_status_code=204
         )
 
-        self.assertRaises(Course.DoesNotExist, Course.objects.get, pk=1)
+        self.assertRaises(Course.DoesNotExist, Course.objects.get, pk=temp_course.pk)
