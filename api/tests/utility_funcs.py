@@ -130,6 +130,44 @@ class TestDataManager:
 
         self.groups.append(group)
 
+    def create_chapter(self, course, **kwargs):
+        if not kwargs:
+            chapter = courses.Chapter.objects.create(
+                title='Test chapter',
+                description='Dummy desc.',
+                course=course
+            )
+        else:
+            chapter = courses.Chapter.objects.create(course=course, **kwargs)
+
+        return chapter
+
+    def create_material(self, chapter, author,  is_archived=False):
+        material = courses.Material.objects.create(
+            title='Test material',
+            body='Body.',
+            published_at=timezone.now(),
+            chapter=chapter,
+            author=author,
+            is_archived=is_archived
+        )
+
+        return material
+
+    def create_task(self, chapter, author, is_archived=False):
+        task = courses.Task.objects.create(
+            title='Test task',
+            body='Test body.',
+            published_at=timezone.now(),
+            chapter=chapter,
+            author=author,
+            max_grade=12,
+            deadline=timezone.now(),
+            is_archived=is_archived
+        )
+
+        return task
+
 
 def populate_users(teacher_email, student_email):
     faculty = university_structures.Faculty.objects.create(
@@ -247,8 +285,8 @@ class ViewSetTestCase(TestCase):
         data = kwargs.pop('data', {})
         method = kwargs.pop('method', 'GET')
         expected_status_code = kwargs.pop('expected_status_code', 200)
-        pk = kwargs.pop('pk', None)
-        url = reverse(url_name) if not pk else reverse(url_name, kwargs={'pk': pk})
+        url_params = kwargs.pop('url_params', None)
+        url = reverse(url_name) if not url_params else reverse(url_name, kwargs=url_params)
 
         func = self.client.get
         if method == 'POST':
@@ -261,6 +299,10 @@ class ViewSetTestCase(TestCase):
 
         if method == 'DELETE':
             func = self.client.delete
+
+        if method == 'PATCH':
+            func = self.client.patch
+            kwargs['content_type'] = 'application/json'
 
         response = func(url, data, **kwargs)
         self.assertEquals(expected_status_code, response.status_code)
