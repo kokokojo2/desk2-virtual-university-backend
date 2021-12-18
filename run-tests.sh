@@ -5,6 +5,8 @@ rm -rf coverage_info
 # cleaning up a testing container that might've not been removed before
 docker rm -f test-desk2-api > /dev/null 2>&1
 
+# building an image
+docker build --file deploy/api.dockerfile -t desk2-api .
 
 # unit, integration testing, code coverage
 echo "Running unit tests in a container..."
