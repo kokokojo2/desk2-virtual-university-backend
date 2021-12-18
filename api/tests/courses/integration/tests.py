@@ -280,3 +280,135 @@ class ChapterViewSetTestCase(utility_funcs.AuthorizedViewSetTestCase):
         )
 
         self.assertRaises(Chapter.DoesNotExist, Chapter.objects.get, pk=self.chapter.pk)
+
+
+class CourseMemberViewSetTestCase(utility_funcs.AuthorizedViewSetTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.data_manager = utility_funcs.TestDataManager()
+        cls.teacher = cls.data_manager.create_teacher('teacher@test.com')
+        cls.student = cls.data_manager.create_student('student@test.com')
+        cls.teacher_not_enrolled = cls.data_manager.create_teacher('teacher12@test.com')
+        cls.course = utility_funcs.populate_course(cls.teacher, [cls.student])
+
+    def test_get_course_member(self):
+        response = self.get_response('coursemember-list', self.student, url_params={'course_id': self.course.pk})
+        self.assertEquals(self.teacher.pk, response.data[0]['user']['id'])
+        self.assertEquals(self.student.pk, response.data[1]['user']['id'])
+
+    def test_get_course_members_not_enrolled(self):
+        self.get_response('coursemember-list', self.teacher_not_enrolled, url_params={'course_id': self.course.pk},
+                          expected_status_code=403)
+
+    def test_get_course_member_detail(self):
+        response = self.get_response(
+            'coursemember-detail',
+            self.teacher,
+            url_params={'course_id': self.course.pk, 'pk': self.course.get_course_member_if_exists(self.teacher).pk}
+            )
+
+        self.assertEquals(self.course.get_course_member_if_exists(self.teacher).pk, response.data['id'])
+
+    def test_add_course_member(self):
+        student = self.data_manager.create_student('student1@gmail.com')
+        self.get_response(
+            'coursemember-add-student',
+            self.teacher,
+            data={'email': student.email, 'member_type': 'student'},
+            url_params={'course_id': self.course.pk},
+            method='POST',
+            expected_status_code=204
+        )
+
+        self.assertEquals(CourseMember.STUDENT, self.course.get_course_member_if_exists(student).role)
+
+    def test_add_course_member_permissions(self):
+        student = self.data_manager.create_student('student1@gmail.com')
+        self.get_response(
+            'coursemember-add-student',
+            self.student,
+            data={'email': student.email, 'member_type': 'student'},
+            url_params={'course_id': self.course.pk},
+            method='POST',
+            expected_status_code=403
+        )
+
+    def test_enroll_as_auditor(self):
+        student = self.data_manager.create_student('student3@gmail.com')
+        response = self.get_response(
+            'coursemember-list',
+            student,
+            url_params={'course_id': self.course.pk},
+            method='POST',
+            expected_status_code=201
+        )
+
+        self.assertEquals(student.pk, response.data['user']['id'])
+        self.assertEquals('auditor', response.data['role'])
+
+    def test_delete_course_member_as_teacher(self):
+        student = self.data_manager.create_student('student5@gmail.com')
+        self.get_response(
+            'coursemember-list',
+            student,
+            url_params={'course_id': self.course.pk},
+            method='POST',
+            expected_status_code=201
+        )
+
+        self.get_response(
+            'coursemember-detail',
+            self.teacher,
+            url_params={'course_id': self.course.pk, 'pk': self.course.get_course_member_if_exists(student).pk},
+            method='DELETE',
+            expected_status_code=204
+        )
+
+        self.assertIsNone(self.course.get_course_member_if_exists(student))
+
+    def test_delete_course_member_self(self):
+        student = self.data_manager.create_student('student4@gmail.com')
+        self.get_response(
+            'coursemember-list',
+            student,
+            url_params={'course_id': self.course.pk},
+            method='POST',
+            expected_status_code=201
+        )
+
+        self.get_response(
+            'coursemember-detail',
+            student,
+            url_params={'course_id': self.course.pk, 'pk': self.course.get_course_member_if_exists(student).pk},
+            method='DELETE',
+            expected_status_code=204
+        )
+
+        self.assertIsNone(self.course.get_course_member_if_exists(student))
+
+    def test_delete_other_course_member_student(self):
+        student = self.data_manager.create_student('student6@gmail.com')
+        self.get_response(
+            'coursemember-list',
+            student,
+            url_params={'course_id': self.course.pk},
+            method='POST',
+            expected_status_code=201
+        )
+
+        self.get_response(
+            'coursemember-detail',
+            self.student,
+            url_params={'course_id': self.course.pk, 'pk': self.course.get_course_member_if_exists(student).pk},
+            method='DELETE',
+            expected_status_code=403
+        )
+
+    def test_already_enrolled(self):
+        self.get_response(
+            'coursemember-list',
+            self.student,
+            url_params={'course_id': self.course.pk},
+            method='POST',
+            expected_status_code=400
+        )
