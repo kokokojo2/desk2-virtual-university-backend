@@ -43,10 +43,10 @@ def poll_logs_until_match(pattern, tail='50', svc='', timeout=30, supress_logs=F
 
 # get a 2FA or email-confirmation token printed to console
 def get_last_email_token():
-    email_code_matches = poll_logs_until_match('<h1>\w+<\/h1>', svc='desk2-api', timeout=2)
+    email_code_matches = poll_logs_until_match("((To finish registration, please, confirm your email by entering the following code:)|(If this is you, please, use the code below to finish logging in\.))\n\n\s+(\w+)", svc='desk2-api', timeout=2)
     if not email_code_matches:
         return None
-    return email_code_matches[-1][4:-5]
+    return email_code_matches[-1][3][-7:]
 
 
 def stop_services():
@@ -213,7 +213,6 @@ def student_registration_should_succeed():
     test_common_data["student_obj"] = user_registration_obj
     
     return True
-
 
 def teacher_registration_should_succeed():
     teacher_registration_object = {
