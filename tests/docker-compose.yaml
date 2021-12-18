@@ -4,10 +4,8 @@ services:
     image: desk2-api
     ports:
       - "8000:8000"
-    volumes:
-      - ./container-data/desk2/attachments:/app/attachments:rw
     env_file:
-      - api.env
+      - api.test-env
     links:
       - redis
       - postgres
@@ -16,15 +14,11 @@ services:
   redis:
     image: "redis:6.2.6"
     command: redis-server --save 60 1 --appendonly yes
-    volumes:
-      - ./container-data/redis:/data:rw
     ports:
       - "6379:6379"
   postgres:
     image: "postgres:14.1"
-    volumes:
-      - ./container-data/postgres:/var/lib/postgresql/data:rw
     env_file:
-      - postgres.env
+      - postgres.test-env
     ports:
       - "5432:5432"
