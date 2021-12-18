@@ -94,3 +94,95 @@ class CourseViewSetTestCase(utility_funcs.AuthorizedViewSetTestCase):
         )
 
         self.assertRaises(Course.DoesNotExist, Course.objects.get, pk=temp_course.pk)
+
+class TaskViewSetTestCase(utility_funcs.AuthorizedViewSetTestCase):
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.data_manager = utility_funcs.TestDataManager()
+        cls.teacher = cls.data_manager.create_teacher('teacher@test.com')
+        cls.student = cls.data_manager.create_student('student@test.com')
+        cls.course = utility_funcs.populate_course(cls.teacher, [cls.student])
+        cls.chapter = cls.data_manager.create_chapter(cls.course)
+        cls.task = cls.data_manager.create_task(cls.chapter,
+                                                        cls.course.get_course_member_if_exists(cls.teacher),
+                                                        is_archived=True)
+
+    def setUp(self):
+        self.task_json = {
+            "title": "Task 3 chm",
+            "body": "test",
+            "published_at": timezone.now(),
+            "deadline": timezone.now(),
+            "max_grade": 12
+        }
+
+    def test_get_task(self):
+        response = self.get_response(
+            'task-list',
+            self.teacher,
+            url_params={'course_id': self.course.pk, 'chapter_id': self.chapter.pk},
+        )
+
+        self.assertEquals(self.task.pk, response.data[0]['id'])
+
+    def test_create_task(self):
+        self.get_response(
+            'task-list',
+            self.teacher,
+            url_params={'course_id': self.course.pk, 'chapter_id': self.chapter.pk},
+            expected_status_code=201,
+            data=self.task_json,
+            method='POST'
+        )
+
+    def test_create_task_student(self):
+        self.get_response(
+            'task-list',
+            self.student,
+            url_params={'course_id': self.course.pk, 'chapter_id': self.chapter.pk},
+            expected_status_code=403,
+            data=self.task_json,
+            method='POST'
+        )
+
+    def test_get_inactive_task_student(self):
+        self.task.is_archived = True
+        self.task.save()
+
+        response = self.get_response(
+            'task-list',
+            self.student,
+            url_params={'course_id': self.course.pk, 'chapter_id': self.chapter.pk},
+        )
+
+        self.assertEquals(0, len(response.data))
+
+        self.task.is_archived = False
+        self.task.save()
+
+    def test_partial_update_task(self):
+        update_data = {'title': 'Updated task'}
+        response = self.get_response(
+            'task-detail',
+            self.teacher,
+            url_params={'course_id': self.course.pk, 'chapter_id': self.chapter.pk, 'pk': self.task.pk},
+            expected_status_code=200,
+            data=update_data,
+            method='PATCH'
+        )
+
+        self.assertEquals(update_data['title'], response.data['title'])
+
+    def test_delete_task_teacher(self):
+        temp_task = self.data_manager.create_task(self.chapter, self.course.get_course_member_if_exists(self.teacher))
+
+        self.get_response(
+            'task-detail',
+            self.teacher,
+            url_params={'course_id': self.course.pk, 'chapter_id': self.chapter.pk, 'pk': temp_task.pk},
+            expected_status_code=204,
+            method='DELETE'
+        )
+
+        self.assertRaises(Task.DoesNotExist, Task.objects.get, pk=temp_task.pk)
