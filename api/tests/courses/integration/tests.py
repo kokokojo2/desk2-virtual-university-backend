@@ -186,3 +186,97 @@ class TaskViewSetTestCase(utility_funcs.AuthorizedViewSetTestCase):
         )
 
         self.assertRaises(Task.DoesNotExist, Task.objects.get, pk=temp_task.pk)
+
+
+
+class ChapterViewSetTestCase(utility_funcs.AuthorizedViewSetTestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.data_manager = utility_funcs.TestDataManager()
+        cls.teacher = cls.data_manager.create_teacher('teacher@test.com')
+        cls.student = cls.data_manager.create_student('student@test.com')
+        cls.course = utility_funcs.populate_course(cls.teacher, [cls.student])
+        cls.chapter = cls.data_manager.create_chapter(cls.course)
+        cls.material = cls.data_manager.create_material(cls.chapter, cls.course.get_course_member_if_exists(cls.teacher), is_archived=True)
+
+    def setUp(self):
+        self.edit_chapter_data = {'title': 'Edited'}
+
+    def test_get_chapter(self):
+        response = self.get_response(
+            'chapter-list',
+            self.teacher,
+            url_params={'course_id': self.course.pk},
+        )
+
+        self.assertEquals(self.chapter.pk, response.data[0]['id'])
+
+    def test_get_chapter_detail(self):
+        response = self.get_response(
+            'chapter-detail',
+            self.teacher,
+            url_params={'course_id': self.course.pk, 'pk': self.chapter.pk},
+        )
+
+        self.assertEquals(self.chapter.pk, response.data['id'])
+
+    def test_get_chapter_that_does_not_exist(self):
+        self.get_response(
+            'chapter-detail',
+            self.teacher,
+            url_params={'course_id': self.course.pk, 'pk': 2001},
+            expected_status_code=404
+        )
+
+    def test_get_chapter_with_inactive_materials_teacher(self):
+        response = self.get_response(
+            'chapter-detail',
+            self.teacher,
+            url_params={'course_id': self.course.pk, 'pk': self.chapter.pk},
+            expected_status_code=200
+        )
+
+        self.assertEquals(self.material.pk, response.data['material_set'][0]['id'])
+
+    def test_get_chapter_with_active_materials_teacher(self):
+        response = self.get_response(
+            'chapter-detail',
+            self.student,
+            url_params={'course_id': self.course.pk, 'pk': self.chapter.pk},
+            expected_status_code=200
+        )
+
+        self.assertRaises(IndexError, response.data['material_set'].__getitem__, 0)
+
+    def test_p_edit_chapter(self):
+        response = self.get_response(
+            'chapter-detail',
+            self.teacher,
+            url_params={'course_id': self.course.pk, 'pk': self.chapter.pk},
+            expected_status_code=200,
+            data=self.edit_chapter_data,
+            method='PATCH'
+        )
+
+        self.assertEquals(self.edit_chapter_data['title'], response.data['title'])
+
+    def test_edit_chapter_student(self):
+        self.get_response(
+            'chapter-detail',
+            self.student,
+            url_params={'course_id': self.course.pk, 'pk': self.chapter.pk},
+            expected_status_code=403,
+            data=self.edit_chapter_data,
+            method='PATCH'
+        )
+
+    def test_delete_chapter(self):
+        self.get_response(
+            'chapter-detail',
+            self.teacher,
+            url_params={'course_id': self.course.pk, 'pk': self.chapter.pk},
+            expected_status_code=204,
+            method='DELETE'
+        )
+
+        self.assertRaises(Chapter.DoesNotExist, Chapter.objects.get, pk=self.chapter.pk)
