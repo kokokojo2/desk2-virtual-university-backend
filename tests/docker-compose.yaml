@@ -5,7 +5,7 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - api.env
+      - api.test-env
     links:
       - redis
       - postgres
@@ -19,6 +19,6 @@ services:
   postgres:
     image: "postgres:14.1"
     env_file:
-      - postgres.env
+      - postgres.test-env
     ports:
       - "5432:5432"
