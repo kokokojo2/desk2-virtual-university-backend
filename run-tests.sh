@@ -10,7 +10,7 @@ docker build --file deploy/api.dockerfile -t desk2-api .
 
 # unit, integration testing, code coverage
 echo "Running unit tests in a container..."
-docker run -d -e "EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'" -e "EMAIL_HOST_USER='123'" -e "EMAIL_HOST_PASSWORD='123'" --name test-desk2-api -i --entrypoint /usr/bin/dash desk2-api
+docker run -d -e "SECRET_KEY='django-insecure-123'" -e "EMAIL_BACKEND='django.core.mail.backends.console.EmailBackend'" -e "EMAIL_HOST_USER='123'" -e "EMAIL_HOST_PASSWORD='123'" --name test-desk2-api -i --entrypoint /usr/bin/dash desk2-api
 
 # executing migrations
 echo -e "echo \"1\n''\n1\n''\n2\n\" | python manage.py makemigrations\n" | docker exec -i test-desk2-api /usr/bin/dash
