@@ -4,6 +4,7 @@
 Dockerfile
 __pycache__
 container-data
+deploy
 
 # from .gitignore
 # Django #
