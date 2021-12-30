@@ -95,7 +95,7 @@ It opens an SSH session into the container. When done, use `exit` command to exi
 
 ## Deploying with Tilt
 ### Prerequisites
-- Install [Tilt].
+- Install [Tilt](https://docs.tilt.dev/install.html).
   - Make sure to add it to $PATH.
   - You don't need to install Kubernetes utilities.
 - Make sure that your docker-compose version is 1.29.2 or lower (docker-compose logs don't show up in Tilt when using docker-compose version 2.0.0 and higher).
